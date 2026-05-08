@@ -71,7 +71,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceRaised,
   },
   pressed: {
-    opacity: 0.76,
+    opacity: 0.84,
+    transform: [{ scale: 0.985 }],
   },
   row: {
     flexDirection: 'row',

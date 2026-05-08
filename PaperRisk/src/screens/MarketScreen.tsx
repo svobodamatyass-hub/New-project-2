@@ -38,8 +38,8 @@ export function MarketScreen() {
   const canBuy = Boolean(selectedAsset && orderValue > 0 && orderValue <= state.player.cash);
   const canSell = Boolean(selectedAsset && sellShares > 0);
   const orderMessage = canBuy
-    ? `${shares} share order is ready.`
-    : `Need ${formatMoney(Math.max(orderValue - state.player.cash, 0))} more cash for this buy.`;
+    ? 'Ready'
+    : `${formatMoney(Math.max(orderValue - state.player.cash, 0))} short`;
   const profileLabel = getActiveProfileLabel(state.settings);
 
   useEffect(() => {
@@ -55,7 +55,7 @@ export function MarketScreen() {
         status={profileLabel}
         statusTone={profileLabel === 'Chaos' ? 'negative' : profileLabel === 'Chill' ? 'positive' : 'warning'}
       />
-      <SectionHeader title="Assets" caption="Select an asset, choose shares, and trade with paper cash." />
+      <SectionHeader title="Assets" />
 
       <View style={styles.statsRow}>
         <StatTile label="Cash" value={formatMoney(state.player.cash)} />
@@ -106,7 +106,7 @@ export function MarketScreen() {
         <PortfolioList assets={state.assets} positions={state.player.positions} />
       </Panel>
 
-      <SectionHeader title="Market list" caption="Tap a card to stage a trade." />
+      <SectionHeader title="Market list" />
       <View style={styles.list}>
         {state.assets.map((asset) => (
           <AssetListItem

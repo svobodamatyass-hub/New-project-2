@@ -8,7 +8,6 @@ import { Panel } from '../components/Panel';
 import { getSaveStatusLabel } from '../components/SaveStatusBadge';
 import { Screen } from '../components/Screen';
 import { SectionHeader } from '../components/SectionHeader';
-import { getCasinoDifficultyConfig } from '../domain/casino';
 import { useGame } from '../game/GameProvider';
 import { colors, spacing, typography, webFocusReset } from '../theme';
 
@@ -75,37 +74,6 @@ function getDifficultyInterestMultiplier(level: 'easy' | 'normal' | 'hard') {
   }
 }
 
-function getEstimatedSlotsReturn(level: 'easy' | 'normal' | 'hard') {
-  const config = getCasinoDifficultyConfig(level);
-  const baseWin = 0.55;
-  const effectiveWin = Math.max(0.02, Math.min(0.92, baseWin + config.slotsWinChanceOffset));
-  const weightedBasePayout = 425; // weighted average of small/medium/big/jackpot tiers
-  const effectivePayout = weightedBasePayout * config.slotsPayoutMultiplier;
-  const ev = effectiveWin * effectivePayout - 1; // one token spin cost proxy
-
-  return `${ev >= 0 ? '+' : ''}${ev.toFixed(0)} / spin`;
-}
-
-function getEstimatedRouletteColorReturn(level: 'easy' | 'normal' | 'hard') {
-  const config = getCasinoDifficultyConfig(level);
-  const baseColorChance = 18 / 37;
-  const winChance = Math.min(Math.max(0.01, baseColorChance + 0.05 + config.rouletteBoostOffset), 0.98);
-  const payout = 2 * config.roulettePayoutMultiplier;
-  const ev = winChance * payout - 1;
-
-  return `${(ev * 100).toFixed(1)}% / bet`;
-}
-
-function getEstimatedBlackjackReturn(level: 'easy' | 'normal' | 'hard') {
-  const config = getCasinoDifficultyConfig(level);
-  // Simple house-edge proxy for this auto-hand model.
-  const baseRtp = 0.965;
-  const adjustedRtp = Math.min(1.2, Math.max(0.7, baseRtp * config.blackjackPayoutMultiplier));
-  const edge = (adjustedRtp - 1) * 100;
-
-  return `${edge.toFixed(1)}% / hand`;
-}
-
 export function SettingsScreen() {
   const [isResetArmed, setIsResetArmed] = useState(false);
   const { resetGame, saveStatus, setEconomyDifficulty, setMarketSpeed, setMarketVolatility, state } = useGame();
@@ -136,7 +104,7 @@ export function SettingsScreen() {
 
   return (
     <Screen>
-      <SectionHeader title="Settings" caption="Local app controls for your paper simulation." />
+      <SectionHeader title="Settings" />
 
       <Panel>
         <Text style={styles.panelTitle}>Storage</Text>
@@ -246,19 +214,12 @@ export function SettingsScreen() {
           label="Debt interest pressure"
           value={`${getDifficultyInterestMultiplier(state.settings.economyDifficulty).toFixed(2)}x`}
         />
-        <InfoRow
-          label="Casino pressure"
-          value={`${getCasinoDifficultyConfig(state.settings.economyDifficulty).slotsPayoutMultiplier.toFixed(2)}x payout`}
-        />
-        <InfoRow label="Slots expected return" value={getEstimatedSlotsReturn(state.settings.economyDifficulty)} />
-        <InfoRow label="Roulette expected return" value={getEstimatedRouletteColorReturn(state.settings.economyDifficulty)} />
-        <InfoRow label="Blackjack expected return" value={getEstimatedBlackjackReturn(state.settings.economyDifficulty)} />
         <View style={styles.resetRow}>
           <ActionButton Icon={RefreshCcw} onPress={handleResetPress} tone={isResetArmed ? 'danger' : 'neutral'}>
             {isResetArmed ? 'Confirm reset' : 'Reset all progress'}
           </ActionButton>
         </View>
-        {isResetArmed ? <Text style={styles.resetHint}>Tap once more to reset cash, portfolio, casino stats, and history.</Text> : null}
+        {isResetArmed ? <Text style={styles.resetHint}>Confirm reset</Text> : null}
       </Panel>
     </Screen>
   );

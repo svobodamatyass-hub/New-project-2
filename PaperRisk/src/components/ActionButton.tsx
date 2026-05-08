@@ -87,7 +87,8 @@ const styles = StyleSheet.create({
     borderColor: colors.warningMuted,
   },
   pressed: {
-    opacity: 0.74,
+    opacity: 0.84,
+    transform: [{ scale: 0.97 }],
   },
   disabled: {
     opacity: 0.48,

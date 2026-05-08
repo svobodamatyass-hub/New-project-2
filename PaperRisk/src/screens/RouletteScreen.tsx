@@ -14,12 +14,11 @@ import {
   getCasinoDifficultyConfig,
   getRouletteBetLabel,
   getRouletteBetPayoutMultiplier,
-  getRouletteBoostedWinChance,
   getRouletteColor,
   playRoulette as createRouletteResult,
   rouletteColorBets,
 } from '../domain/casino';
-import { formatMoney, formatPercent } from '../domain/finance';
+import { formatMoney } from '../domain/finance';
 import { useGame } from '../game/GameProvider';
 import type { RouletteBet, RouletteResult } from '../types/domain';
 import { colors, spacing, typography, webFocusReset } from '../theme';
@@ -182,7 +181,7 @@ export function RouletteScreen() {
 
   return (
     <>
-      <SectionHeader title="Roulette" caption="European wheel order with real red, black, and green pockets." />
+      <SectionHeader title="Roulette" />
 
       <View style={styles.statsRow}>
         <StatTile label="Cash" value={formatMoney(state.player.cash)} tone="default" />
@@ -198,7 +197,7 @@ export function RouletteScreen() {
           </AnimatedView>
           <View style={styles.wheelReadout} pointerEvents="none">
             <Text style={styles.resultNumber}>{isSpinning ? rollingNumber : result?.number ?? '-'}</Text>
-            <Text style={styles.resultColor}>{isSpinning ? 'rolling' : result?.color ?? 'ready'}</Text>
+            <Text style={styles.resultColor}>{isSpinning ? 'spin' : result?.color ?? '-'}</Text>
           </View>
         </View>
 
@@ -218,7 +217,7 @@ export function RouletteScreen() {
             />
           </>
         ) : (
-          <Text style={styles.empty}>Spin the wheel to lock the first result.</Text>
+          <Text style={styles.empty}>-</Text>
         )}
       </Panel>
 
@@ -229,10 +228,6 @@ export function RouletteScreen() {
             <Text style={styles.selectionText}>
               {getRouletteBetLabel(bet)} |{' '}
               {(getRouletteBetPayoutMultiplier(bet) * getCasinoDifficultyConfig(state.settings.economyDifficulty).roulettePayoutMultiplier).toFixed(2)}x
-              {' | '}
-              {formatPercent(
-                getRouletteBoostedWinChance(bet, getCasinoDifficultyConfig(state.settings.economyDifficulty).rouletteBoostOffset) * 100,
-              )}
             </Text>
           </View>
           <View style={styles.chip}>

@@ -73,7 +73,7 @@ export function WalletScreen() {
         status={profileLabel}
         statusTone={profileLabel === 'Chaos' ? 'negative' : profileLabel === 'Chill' ? 'positive' : 'warning'}
       />
-      <SectionHeader title="Credit" caption="Cash position, current debt, and interest pressure." />
+      <SectionHeader title="Credit" />
 
       <View style={styles.statsRow}>
         <StatTile label="Cash" value={formatMoney(player.cash)} />
@@ -124,7 +124,6 @@ export function WalletScreen() {
         <ActionButton disabled={player.loan.principal <= 0} Icon={TimerReset} onPress={applyInterest} tone="casino">
           Advance interest
         </ActionButton>
-        <Text style={styles.ruleText}>Overdue interest catches up automatically when the app loads.</Text>
       </Panel>
 
       <Panel>
@@ -141,7 +140,7 @@ export function WalletScreen() {
             </ActionButton>
           </View>
         </View>
-        {isResetArmed ? <Text style={styles.resetHint}>Tap Confirm to restart the local simulation.</Text> : null}
+        {isResetArmed ? <Text style={styles.resetHint}>Confirm reset</Text> : null}
         <TransactionList transactions={transactions.slice(0, 6)} />
       </Panel>
 
@@ -196,13 +195,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     lineHeight: 16,
-  },
-  ruleText: {
-    color: colors.textFaint,
-    fontFamily: typography.family,
-    fontSize: 12,
-    fontWeight: '700',
-    lineHeight: 16,
-    textAlign: 'center',
   },
 });

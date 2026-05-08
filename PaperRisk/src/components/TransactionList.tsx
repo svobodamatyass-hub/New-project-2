@@ -49,8 +49,7 @@ export function TransactionList({ transactions }: TransactionListProps) {
   if (transactions.length === 0) {
     return (
       <View style={styles.empty}>
-        <Text style={styles.emptyTitle}>No activity yet</Text>
-        <Text style={styles.emptyText}>Borrowing, repayments, trades, and casino results will appear here.</Text>
+        <Text style={styles.emptyTitle}>No activity</Text>
       </View>
     );
   }
@@ -73,11 +72,6 @@ export function TransactionList({ transactions }: TransactionListProps) {
                 </Text>
                 <Badge label={formatTransactionTime(transaction.createdAt)} />
               </View>
-              {transaction.description ? (
-                <Text numberOfLines={2} style={styles.transactionDescription}>
-                  {transaction.description}
-                </Text>
-              ) : null}
             </View>
             <Text style={[styles.transactionAmount, styles[`${tone}Amount`]]}>
               {formatMoney(transaction.amount)}
@@ -104,14 +98,6 @@ const styles = StyleSheet.create({
     fontFamily: typography.family,
     fontSize: 15,
     fontWeight: '800',
-  },
-  emptyText: {
-    color: colors.textMuted,
-    fontFamily: typography.family,
-    fontSize: 13,
-    fontWeight: '600',
-    lineHeight: 18,
-    textAlign: 'center',
   },
   transaction: {
     minHeight: 62,
@@ -155,13 +141,6 @@ const styles = StyleSheet.create({
     fontFamily: typography.family,
     fontSize: 14,
     fontWeight: '800',
-  },
-  transactionDescription: {
-    color: colors.textMuted,
-    fontFamily: typography.family,
-    fontSize: 12,
-    fontWeight: '600',
-    lineHeight: 16,
   },
   transactionAmount: {
     minWidth: 72,

@@ -273,7 +273,7 @@ export function getRouletteBetLabel(bet: RouletteBet) {
 }
 
 export function getRouletteBetPayoutMultiplier(bet: RouletteBet) {
-  return bet.type === 'number' ? 36 : 2;
+  return bet.type === 'number' ? 20 : 2;
 }
 
 export function getRouletteBaseWinChance(bet: RouletteBet) {
@@ -285,7 +285,9 @@ export function getRouletteBaseWinChance(bet: RouletteBet) {
 }
 
 export function getRouletteBoostedWinChance(bet: RouletteBet, boostOffset = 0) {
-  return Math.min(Math.max(0.01, getRouletteBaseWinChance(bet) + 0.05 + boostOffset), 0.98);
+  const straightBetPenalty = bet.type === 'number' ? 0.01 : 0;
+
+  return Math.min(Math.max(0.01, getRouletteBaseWinChance(bet) + 0.05 + boostOffset - straightBetPenalty), 0.98);
 }
 
 function isRouletteWin(bet: RouletteBet, number: number, color: RouletteColor) {

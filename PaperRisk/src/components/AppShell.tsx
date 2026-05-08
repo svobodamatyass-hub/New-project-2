@@ -33,7 +33,12 @@ export function AppShell({ activeTab, tabs, children, onTabPress }: AppShellProp
               accessibilityState={{ selected: isActive }}
               key={key}
               onPress={() => onTabPress(key)}
-              style={[styles.tabItem, webFocusReset, isActive && styles.tabItemActive]}
+              style={({ pressed }) => [
+                styles.tabItem,
+                webFocusReset,
+                isActive && styles.tabItemActive,
+                pressed && styles.tabPressed,
+              ]}
             >
               <Icon size={22} color={tone} strokeWidth={isActive ? 2.4 : 2} />
               <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>{label}</Text>
@@ -73,6 +78,10 @@ const styles = StyleSheet.create({
   },
   tabItemActive: {
     backgroundColor: colors.surface,
+  },
+  tabPressed: {
+    transform: [{ scale: 0.96 }],
+    opacity: 0.82,
   },
   tabLabel: {
     color: colors.textFaint,

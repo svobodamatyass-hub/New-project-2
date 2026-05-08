@@ -161,7 +161,6 @@ export function SlotsScreen() {
             {isSpinning ? 'Spinning...' : 'Spin'}
           </ActionButton>
         </View>
-        {casino.tokens <= 0 ? <Text style={styles.hint}>Buy tokens before spinning.</Text> : null}
       </Panel>
 
       <Panel>
@@ -239,13 +238,6 @@ const styles = StyleSheet.create({
   },
   spinButtonWrap: {
     minHeight: 68,
-  },
-  hint: {
-    color: colors.textFaint,
-    fontFamily: typography.family,
-    fontSize: 12,
-    fontWeight: '700',
-    textAlign: 'center',
   },
   panelTitle: {
     color: colors.text,

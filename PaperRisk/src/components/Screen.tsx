@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { Animated, StyleSheet } from 'react-native';
 
 import { colors, spacing } from '../theme';
 
@@ -8,10 +9,32 @@ type ScreenProps = {
 };
 
 export function Screen({ children }: ScreenProps) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(8)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 180,
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateY, {
+        toValue: 0,
+        duration: 180,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [opacity, translateY]);
+
   return (
-    <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} style={styles.screen}>
+    <Animated.ScrollView
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
+      style={[styles.screen, { opacity, transform: [{ translateY }] }]}
+    >
       {children}
-    </ScrollView>
+    </Animated.ScrollView>
   );
 }
 

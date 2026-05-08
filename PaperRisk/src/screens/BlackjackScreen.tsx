@@ -152,7 +152,7 @@ export function BlackjackScreen() {
 
   return (
     <>
-      <SectionHeader title="Blackjack" caption="Pick a wager and play one fast dealer hand." />
+      <SectionHeader title="Blackjack" />
 
       <View style={styles.statsRow}>
         <StatTile label="Cash" value={formatMoney(state.player.cash)} tone="default" />
@@ -188,7 +188,6 @@ export function BlackjackScreen() {
                 ))}
               </View>
             </View>
-            <Text style={styles.empty}>Cards are landing...</Text>
           </>
         ) : blackjackLastResult ? (
           <>
@@ -218,7 +217,7 @@ export function BlackjackScreen() {
             />
           </>
         ) : (
-          <Text style={styles.empty}>No blackjack hand yet.</Text>
+          <Text style={styles.empty}>-</Text>
         )}
       </Panel>
     </>

@@ -14,8 +14,7 @@ export function PortfolioList({ assets, positions }: PortfolioListProps) {
   if (positions.length === 0) {
     return (
       <View style={styles.empty}>
-        <Text style={styles.emptyTitle}>No positions yet</Text>
-        <Text style={styles.emptyText}>Your first paper trades will appear here.</Text>
+        <Text style={styles.emptyTitle}>No positions</Text>
       </View>
     );
   }
@@ -67,12 +66,6 @@ const styles = StyleSheet.create({
     fontFamily: typography.family,
     fontSize: 15,
     fontWeight: '800',
-  },
-  emptyText: {
-    color: colors.textMuted,
-    fontFamily: typography.family,
-    fontSize: 13,
-    fontWeight: '600',
   },
   row: {
     minHeight: 58,

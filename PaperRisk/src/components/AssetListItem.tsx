@@ -16,21 +16,10 @@ type AssetListItemProps = {
 
 export function AssetListItem({ asset, compact = false, isSelected = false, onPress }: AssetListItemProps) {
   const tone = asset.changePercent >= 0 ? 'positive' : 'negative';
-  const Container = onPress ? Pressable : View;
+  const baseCardStyle = [styles.card, webFocusReset, compact && styles.compactCard, isSelected && styles.selectedCard];
 
-  return (
-    <Container
-      accessibilityRole={onPress ? 'button' : undefined}
-      accessibilityState={onPress ? { selected: isSelected } : undefined}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.card,
-        webFocusReset,
-        compact && styles.compactCard,
-        isSelected && styles.selectedCard,
-        pressed && styles.pressed,
-      ]}
-    >
+  const content = (
+    <>
       <View style={styles.row}>
         <View style={styles.identity}>
           <Text style={styles.symbol}>{asset.symbol}</Text>
@@ -49,7 +38,22 @@ export function AssetListItem({ asset, compact = false, isSelected = false, onPr
           <Text style={styles.meta}>{getVolatilityLabel(asset)}</Text>
         </View>
       ) : null}
-    </Container>
+    </>
+  );
+
+  if (!onPress) {
+    return <View style={baseCardStyle}>{content}</View>;
+  }
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected: isSelected }}
+      onPress={onPress}
+      style={({ pressed }) => [baseCardStyle, pressed && styles.pressed]}
+    >
+      {content}
+    </Pressable>
   );
 }
 

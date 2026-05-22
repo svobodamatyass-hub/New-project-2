@@ -19,6 +19,14 @@ npm run web
 npm run typecheck
 ```
 
+## APK build
+
+```bash
+npm install -g eas-cli
+eas login
+eas build -p android --profile preview
+```
+
 ## Product Direction
 
 - Matte black minimalist UI

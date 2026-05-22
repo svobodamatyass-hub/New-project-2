@@ -19,13 +19,15 @@ npm run web
 npm run typecheck
 ```
 
-## APK build
+## APK build (GitHub Actions)
 
-```bash
-npm install -g eas-cli
-eas login
-eas build -p android --profile preview
-```
+1. Open repository: [New-project-2](https://github.com/svobodamatyass-hub/New-project-2)
+2. Go to the `Actions` tab.
+3. Run workflow `Build Android APK` (button `Run workflow`).
+4. After the run finishes, open the run and download artifact `PaperRisk-app-debug`.
+5. Install `app-debug.apk` on your phone.
+
+You can still build locally with EAS if you want, but GitHub Actions is the easiest download path from git.
 
 ## Product Direction
 

@@ -9,6 +9,9 @@ on:
       - "PaperRisk/**"
       - ".github/workflows/build-android-apk.yml"
 
+permissions:
+  contents: write
+
 jobs:
   build-apk:
     runs-on: ubuntu-latest
@@ -50,3 +53,16 @@ jobs:
         with:
           name: PaperRisk-app-debug
           path: PaperRisk/android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Prepare release file
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk android/app/build/outputs/apk/debug/PaperRisk-${{ github.run_number }}.apk
+
+      - name: Create GitHub Release with APK
+        if: github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-v${{ github.run_number }}
+          name: PaperRisk APK v${{ github.run_number }}
+          body: Android APK build from workflow run #${{ github.run_number }}.
+          files: PaperRisk/android/app/build/outputs/apk/debug/PaperRisk-${{ github.run_number }}.apk

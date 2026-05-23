@@ -79,12 +79,29 @@ export type RouletteResult = {
   payout: number;
 };
 
+export type FortuneWheelSection = {
+  id: string;
+  label: string;
+  payout: number;
+  isJackpot?: boolean;
+};
+
+export type FortuneWheelResult = {
+  sectionIndex: number;
+  sectionCount: number;
+  label: string;
+  payout: number;
+  tokenCost: number;
+  isJackpot: boolean;
+};
+
 export type CasinoState = {
   tokens: number;
   slotsLosingStreak: number;
   slotsLastResult: SlotsResult;
   blackjackLastResult: BlackjackResult | null;
   rouletteLastResult: RouletteResult | null;
+  fortuneWheelLastResult: FortuneWheelResult | null;
 };
 
 export type TransactionType = 'system' | 'borrow' | 'repay' | 'interest' | 'buy' | 'sell' | 'casino';

@@ -90,6 +90,7 @@ export const initialCasino: CasinoState = {
   },
   blackjackLastResult: null,
   rouletteLastResult: null,
+  fortuneWheelLastResult: null,
 };
 
 const initialTransactions: Transaction[] = [

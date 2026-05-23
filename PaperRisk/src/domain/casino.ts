@@ -1,4 +1,13 @@
-import type { BlackjackCard, BlackjackResult, RouletteBet, RouletteColor, RouletteResult, SlotsResult } from '../types/domain';
+import type {
+  BlackjackCard,
+  BlackjackResult,
+  FortuneWheelResult,
+  FortuneWheelSection,
+  RouletteBet,
+  RouletteColor,
+  RouletteResult,
+  SlotsResult,
+} from '../types/domain';
 
 export const casinoGames = [
   {
@@ -19,6 +28,12 @@ export const casinoGames = [
     description: 'Pick a color and accept the swing.',
     accent: 'negative',
   },
+  {
+    id: 'fortune',
+    title: 'Wheel',
+    description: 'Token wheel with adjustable sections.',
+    accent: 'accent',
+  },
 ] as const;
 
 export const tokenPacks = [
@@ -32,6 +47,9 @@ export const slotsSymbols = ['7', 'BAR', 'DIA', 'DOT', 'STAR', 'K', 'Q', 'A', 'C
 export const slotsBaseWinChance = 0.55;
 export const slotsChanceStep = 0;
 export const slotsMaxWinChance = 0.55;
+export const fortuneWheelTokenCost = 4;
+export const defaultFortuneWheelSectionCount = 20;
+export const fortuneWheelSectionOptions = [12, 16, 20, 24] as const;
 
 export type CasinoDifficulty = 'easy' | 'normal' | 'hard';
 
@@ -155,6 +173,59 @@ export function spinSlots(
     tier,
     payout: Math.max(1, Math.round(getTierPayout(tier) * payoutMultiplier)),
     winChance,
+  };
+}
+
+const fortuneWheelBaseSections: FortuneWheelSection[] = [
+  { id: 'zero-a', label: '0', payout: 0 },
+  { id: 'ten-a', label: '10', payout: 10 },
+  { id: 'zero-b', label: '0', payout: 0 },
+  { id: 'fifty-a', label: '50', payout: 50 },
+  { id: 'zero-c', label: '0', payout: 0 },
+  { id: 'twenty-five-a', label: '25', payout: 25 },
+  { id: 'zero-d', label: '0', payout: 0 },
+  { id: 'hundred-a', label: '100', payout: 100 },
+  { id: 'ten-b', label: '10', payout: 10 },
+  { id: 'zero-e', label: '0', payout: 0 },
+  { id: 'fifty-b', label: '50', payout: 50 },
+  { id: 'zero-f', label: '0', payout: 0 },
+  { id: 'twenty-five-b', label: '25', payout: 25 },
+  { id: 'zero-g', label: '0', payout: 0 },
+  { id: 'two-fifty', label: '250', payout: 250 },
+  { id: 'ten-c', label: '10', payout: 10 },
+  { id: 'zero-h', label: '0', payout: 0 },
+  { id: 'fifty-c', label: '50', payout: 50 },
+  { id: 'five-hundred', label: '500', payout: 500 },
+  { id: 'jackpot', label: 'Jackpot', payout: 750, isJackpot: true },
+  { id: 'zero-i', label: '0', payout: 0 },
+  { id: 'twenty-five-c', label: '25', payout: 25 },
+  { id: 'zero-j', label: '0', payout: 0 },
+  { id: 'hundred-b', label: '100', payout: 100 },
+];
+
+export function getFortuneWheelSections(sectionCount = defaultFortuneWheelSectionCount): FortuneWheelSection[] {
+  const count = Math.max(8, Math.min(fortuneWheelBaseSections.length, Math.round(sectionCount)));
+  const jackpot = fortuneWheelBaseSections.find((section) => section.isJackpot) ?? fortuneWheelBaseSections[19];
+  const regularSections = fortuneWheelBaseSections.filter((section) => !section.isJackpot).slice(0, count - 1);
+
+  return [...regularSections, jackpot].map((section, index) => ({
+    ...section,
+    id: `${section.id}-${index}`,
+  }));
+}
+
+export function spinFortuneWheel(sectionCount = defaultFortuneWheelSectionCount): FortuneWheelResult {
+  const sections = getFortuneWheelSections(sectionCount);
+  const sectionIndex = Math.floor(Math.random() * sections.length);
+  const section = sections[sectionIndex];
+
+  return {
+    sectionIndex,
+    sectionCount: sections.length,
+    label: section.label,
+    payout: section.payout,
+    tokenCost: fortuneWheelTokenCost,
+    isJackpot: Boolean(section.isJackpot),
   };
 }
 

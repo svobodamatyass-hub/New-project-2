@@ -16,4 +16,6 @@ export const colors = {
   warningSoft: '#2A2212',
   warningMuted: '#5A4724',
   accent: '#A7B2FF',
+  accentSoft: '#1B2038',
+  accentMuted: '#434C80',
 } as const;

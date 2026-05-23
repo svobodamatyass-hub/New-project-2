@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, CircleDot, Club, Gem } from 'lucide-react-native';
+import { ArrowLeft, CircleDot, CircleDotDashed, Club, Gem } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Badge } from '../components/Badge';
@@ -11,15 +11,17 @@ import { getActiveProfileLabel } from '../domain/settingsProfile';
 import { colors, spacing, typography, webFocusReset } from '../theme';
 import { useGame } from '../game/GameProvider';
 import { BlackjackScreen } from './BlackjackScreen';
+import { FortuneWheelScreen } from './FortuneWheelScreen';
 import { RouletteScreen } from './RouletteScreen';
 import { SlotsScreen } from './SlotsScreen';
 
-type CasinoView = 'hub' | 'slots' | 'blackjack' | 'roulette';
+type CasinoView = 'hub' | 'slots' | 'blackjack' | 'roulette' | 'fortune';
 
 const icons = {
   slots: Gem,
   blackjack: Club,
   roulette: CircleDot,
+  fortune: CircleDotDashed,
 };
 
 export function CasinoScreen() {
@@ -78,6 +80,7 @@ export function CasinoScreen() {
       {casinoView === 'slots' ? <SlotsScreen /> : null}
       {casinoView === 'blackjack' ? <BlackjackScreen /> : null}
       {casinoView === 'roulette' ? <RouletteScreen /> : null}
+      {casinoView === 'fortune' ? <FortuneWheelScreen /> : null}
     </Screen>
   );
 }

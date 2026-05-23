@@ -4,7 +4,7 @@ import { colors, spacing, typography } from '../theme';
 
 type BadgeProps = {
   label: string;
-  tone?: 'neutral' | 'positive' | 'negative' | 'warning';
+  tone?: 'neutral' | 'positive' | 'negative' | 'warning' | 'accent';
 };
 
 export function Badge({ label, tone = 'neutral' }: BadgeProps) {
@@ -40,6 +40,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.warningSoft,
     borderColor: colors.warningMuted,
   },
+  accent: {
+    backgroundColor: colors.accentSoft,
+    borderColor: colors.accentMuted,
+  },
   label: {
     color: colors.textMuted,
     fontFamily: typography.family,
@@ -54,5 +58,8 @@ const styles = StyleSheet.create({
   },
   warningLabel: {
     color: colors.warning,
+  },
+  accentLabel: {
+    color: colors.accent,
   },
 });

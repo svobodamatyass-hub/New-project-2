@@ -3,7 +3,7 @@ import { createContext, useContext, useEffect, useMemo, useReducer, useState } f
 
 import { createInitialGameState } from '../data/initialState';
 import { clearGameState, loadGameState, saveGameState } from '../storage/storage';
-import type { GameState, RouletteBet, RouletteResult, SlotsResult } from '../types/domain';
+import type { FortuneWheelResult, GameState, RouletteBet, RouletteResult, SlotsResult } from '../types/domain';
 import { gameReducer } from './reducer';
 
 export type SaveStatus = 'loading' | 'saved' | 'saving' | 'error';
@@ -20,6 +20,7 @@ type GameContextValue = {
   tickMarket: () => void;
   buyTokens: (packId: string) => void;
   spinSlots: (result?: SlotsResult) => void;
+  spinFortuneWheel: (sectionCount: number, result?: FortuneWheelResult) => void;
   playBlackjack: (wager: number) => void;
   playRoulette: (bet: RouletteBet, wager: number, result?: RouletteResult) => void;
   buyAsset: (assetId: string, shares: number) => void;
@@ -123,6 +124,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       tickMarket: () => dispatch({ type: 'tickMarket' }),
       buyTokens: (packId: string) => dispatch({ type: 'buyTokens', packId }),
       spinSlots: (result?: SlotsResult) => dispatch({ type: 'spinSlots', result }),
+      spinFortuneWheel: (sectionCount: number, result?: FortuneWheelResult) =>
+        dispatch({ type: 'spinFortuneWheel', sectionCount, result }),
       playBlackjack: (wager: number) => dispatch({ type: 'playBlackjack', wager }),
       playRoulette: (bet: RouletteBet, wager: number, result?: RouletteResult) =>
         dispatch({ type: 'playRoulette', bet, wager, result }),

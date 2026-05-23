@@ -1,18 +1,20 @@
 import { createInitialGameState, initialCasino } from '../data/initialState';
 import {
   getCasinoDifficultyConfig,
+  fortuneWheelTokenCost,
   getSlotsWinChance,
   playBlackjack,
   playRoulette,
   getRouletteBetLabel,
   slotsSymbols,
+  spinFortuneWheel,
   spinSlots,
   tokenPacks,
 } from '../domain/casino';
 import { calculateInterestCharge, getRemainingCredit } from '../domain/finance';
 import { normalizeAssetHistory, simulateAssetTickWithMultiplier } from '../domain/marketSimulation';
 import { getEconomyDifficultyFactors } from '../domain/economy';
-import type { GameState, RouletteBet, RouletteResult, SlotsResult, Transaction } from '../types/domain';
+import type { FortuneWheelResult, GameState, RouletteBet, RouletteResult, SlotsResult, Transaction } from '../types/domain';
 import { getAssetById, getPositionByAssetId, hydrateComputedPlayer } from './selectors';
 
 const INTEREST_INTERVAL_MS = 1000 * 60 * 60 * 2;
@@ -26,6 +28,7 @@ export type GameAction =
   | { type: 'tickMarket' }
   | { type: 'buyTokens'; packId: string }
   | { type: 'spinSlots'; result?: SlotsResult }
+  | { type: 'spinFortuneWheel'; sectionCount: number; result?: FortuneWheelResult }
   | { type: 'playBlackjack'; wager: number }
   | { type: 'playRoulette'; wager: number; bet: RouletteBet; result?: RouletteResult }
   | { type: 'buyAsset'; assetId: string; shares: number }
@@ -282,6 +285,38 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             description: isWin
               ? `${result.symbols.join(' ')} paid ${result.payout} CZK.`
               : `${result.symbols.join(' ')} missed at ${Math.round(result.winChance * 1000) / 10}%.`,
+          }),
+          ...state.transactions,
+        ],
+      });
+    }
+
+    case 'spinFortuneWheel': {
+      if (state.casino.tokens < fortuneWheelTokenCost) {
+        return state;
+      }
+
+      const result = action.result ?? spinFortuneWheel(action.sectionCount);
+      const isWin = result.payout > 0;
+
+      return finalizeState({
+        ...state,
+        casino: {
+          ...state.casino,
+          tokens: state.casino.tokens - result.tokenCost,
+          fortuneWheelLastResult: result,
+        },
+        player: {
+          ...state.player,
+          cash: state.player.cash + result.payout,
+          casinoProfit: state.player.casinoProfit + result.payout,
+        },
+        transactions: [
+          createTransaction({
+            type: 'casino',
+            title: result.isJackpot ? 'Wheel jackpot' : isWin ? 'Wheel win' : 'Wheel spin',
+            amount: result.payout,
+            description: `${result.label} landed on a ${result.sectionCount}-section wheel.`,
           }),
           ...state.transactions,
         ],

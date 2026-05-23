@@ -1,8 +1,9 @@
 import { StatusBar } from 'expo-status-bar';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Platform, SafeAreaView, StyleSheet, View } from 'react-native';
 
 import { AppShell } from './src/components/AppShell';
+import { RouletteLoader } from './src/components/RouletteLoader';
 import { GameProvider } from './src/game/GameProvider';
 import { tabs, type TabKey } from './src/navigation/tabs';
 import { CasinoScreen } from './src/screens/CasinoScreen';
@@ -14,6 +15,12 @@ import { colors } from './src/theme/colors';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabKey>('home');
+  const [isBooting, setIsBooting] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsBooting(false), 1800);
+    return () => clearTimeout(timer);
+  }, []);
 
   const screen = useMemo(() => {
     switch (activeTab) {
@@ -40,6 +47,7 @@ export default function App() {
             <AppShell activeTab={activeTab} tabs={tabs} onTabPress={setActiveTab}>
               {screen}
             </AppShell>
+            {isBooting ? <RouletteLoader /> : null}
           </GameProvider>
         </View>
       </View>

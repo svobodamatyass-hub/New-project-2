@@ -1,20 +1,138 @@
 import { useEffect, useRef, useState } from 'react';
-import { Club } from 'lucide-react-native';
-import { Animated, StyleSheet, Text, View } from 'react-native';
+import { BookOpen, Club, X } from 'lucide-react-native';
+import { Animated, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Path, Polygon } from 'react-native-svg';
 
 import { ActionButton } from '../components/ActionButton';
-import { AmountSelector } from '../components/AmountSelector';
 import { InfoRow } from '../components/InfoRow';
 import { Panel } from '../components/Panel';
 import { SectionHeader } from '../components/SectionHeader';
 import { StatTile } from '../components/StatTile';
+import { WagerInput } from '../components/WagerInput';
+import { getCasinoDifficultyConfig } from '../domain/casino';
 import { formatMoney } from '../domain/finance';
 import { useGame } from '../game/GameProvider';
-import type { BlackjackCard } from '../types/domain';
+import type { BlackjackCard, BlackjackResult } from '../types/domain';
 import { colors, spacing, typography } from '../theme';
 
-const wagerOptions = [250, 500, 1000];
+const ranks = [
+  { rank: 'A', value: 11 },
+  { rank: '2', value: 2 },
+  { rank: '3', value: 3 },
+  { rank: '4', value: 4 },
+  { rank: '5', value: 5 },
+  { rank: '6', value: 6 },
+  { rank: '7', value: 7 },
+  { rank: '8', value: 8 },
+  { rank: '9', value: 9 },
+  { rank: '10', value: 10 },
+  { rank: 'J', value: 10 },
+  { rank: 'Q', value: 10 },
+  { rank: 'K', value: 10 },
+] as const;
+const suits = ['S', 'H', 'D', 'C'] as const;
+
+type HandState = {
+  deck: BlackjackCard[];
+  playerCards: BlackjackCard[];
+  dealerCards: BlackjackCard[];
+  wager: number;
+  status: 'playing' | 'settled';
+  result: BlackjackResult | null;
+};
+
+function buildDeck() {
+  const deck: BlackjackCard[] = [];
+
+  suits.forEach((suit) => {
+    ranks.forEach((card) => {
+      deck.push({ rank: card.rank, suit, value: card.value });
+    });
+  });
+
+  for (let index = deck.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [deck[index], deck[swapIndex]] = [deck[swapIndex], deck[index]];
+  }
+
+  return deck;
+}
+
+function drawCard(deck: BlackjackCard[]) {
+  const [card, ...nextDeck] = deck;
+  return { card, deck: nextDeck };
+}
+
+function getHandTotal(cards: BlackjackCard[]) {
+  let total = cards.reduce((sum, card) => sum + card.value, 0);
+  let aces = cards.filter((card) => card.rank === 'A').length;
+
+  while (total > 21 && aces > 0) {
+    total -= 10;
+    aces -= 1;
+  }
+
+  return total;
+}
+
+function isBlackjack(cards: BlackjackCard[]) {
+  return cards.length === 2 && getHandTotal(cards) === 21;
+}
+
+function createResult(
+  playerCards: BlackjackCard[],
+  dealerCards: BlackjackCard[],
+  wager: number,
+  payoutMultiplier: number,
+): BlackjackResult {
+  const playerTotal = getHandTotal(playerCards);
+  const dealerTotal = getHandTotal(dealerCards);
+  const playerBlackjack = isBlackjack(playerCards);
+  const dealerBlackjack = isBlackjack(dealerCards);
+  let outcome: BlackjackResult['outcome'] = 'loss';
+  let payout = 0;
+
+  if (playerBlackjack && dealerBlackjack) {
+    outcome = 'push';
+    payout = wager;
+  } else if (playerBlackjack) {
+    outcome = 'blackjack';
+    payout = Math.round(wager * 2.5 * payoutMultiplier);
+  } else if (playerTotal > 21) {
+    outcome = 'loss';
+  } else if (dealerBlackjack) {
+    outcome = 'loss';
+  } else if (dealerTotal > 21 || playerTotal > dealerTotal) {
+    outcome = 'win';
+    payout = Math.round(wager * 2 * payoutMultiplier);
+  } else if (playerTotal === dealerTotal) {
+    outcome = 'push';
+    payout = wager;
+  }
+
+  return {
+    playerCards,
+    dealerCards,
+    playerTotal,
+    dealerTotal,
+    outcome,
+    wager,
+    payout,
+  };
+}
+
+function drawDealerToRule(deck: BlackjackCard[], dealerCards: BlackjackCard[]) {
+  let nextDeck = deck;
+  const nextDealerCards = [...dealerCards];
+
+  while (getHandTotal(nextDealerCards) < 17) {
+    const draw = drawCard(nextDeck);
+    nextDealerCards.push(draw.card);
+    nextDeck = draw.deck;
+  }
+
+  return { deck: nextDeck, dealerCards: nextDealerCards };
+}
 
 function SuitMark({ color, size = 18, suit }: { color: string; size?: number; suit?: string }) {
   if (suit === 'H') {
@@ -61,12 +179,14 @@ function SuitMark({ color, size = 18, suit }: { color: string; size?: number; su
 function CardTile({ card, faceDown = false, index = 0 }: { card?: BlackjackCard; faceDown?: boolean; index?: number }) {
   const translateY = useRef(new Animated.Value(10)).current;
   const opacity = useRef(new Animated.Value(0)).current;
+  const flip = useRef(new Animated.Value(0)).current;
   const isRed = card?.suit === 'H' || card?.suit === 'D';
   const suitColor = isRed ? colors.negative : colors.textMuted;
 
   useEffect(() => {
     translateY.setValue(10);
     opacity.setValue(0);
+    flip.setValue(0);
 
     Animated.parallel([
       Animated.timing(translateY, {
@@ -81,11 +201,31 @@ function CardTile({ card, faceDown = false, index = 0 }: { card?: BlackjackCard;
         delay: index * 70,
         useNativeDriver: true,
       }),
+      Animated.timing(flip, {
+        toValue: 1,
+        duration: 240,
+        delay: index * 70,
+        useNativeDriver: true,
+      }),
     ]).start();
-  }, [card?.rank, card?.suit, faceDown, index, opacity, translateY]);
+  }, [card?.rank, card?.suit, faceDown, flip, index, opacity, translateY]);
+
+  const rotateY = flip.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['82deg', '0deg'],
+  });
 
   return (
-    <Animated.View style={[styles.cardTile, faceDown && styles.cardBack, { opacity, transform: [{ translateY }] }]}>
+    <Animated.View
+      style={[
+        styles.cardTile,
+        faceDown && styles.cardBack,
+        {
+          opacity,
+          transform: [{ perspective: 700 }, { rotateY }, { translateY }],
+        },
+      ]}
+    >
       {faceDown ? (
         <View style={styles.cardBackMark}>
           <View style={styles.cardBackLine} />
@@ -108,17 +248,34 @@ function CardTile({ card, faceDown = false, index = 0 }: { card?: BlackjackCard;
 }
 
 export function BlackjackScreen() {
-  const [wager, setWager] = useState(wagerOptions[1]);
-  const [isDealing, setIsDealing] = useState(false);
-  const [dealStep, setDealStep] = useState(0);
+  const [wager, setWager] = useState(500);
+  const [hand, setHand] = useState<HandState | null>(null);
+  const [dealStep, setDealStep] = useState(4);
+  const [isInitialDealing, setIsInitialDealing] = useState(false);
+  const [showRules, setShowRules] = useState(false);
   const timeoutRefs = useRef<ReturnType<typeof setTimeout>[]>([]);
-  const { playBlackjack, state } = useGame();
+  const { settleBlackjack, state } = useGame();
   const { blackjackLastResult } = state.casino;
-  const canPlay = state.player.cash >= wager && !isDealing;
+  const payoutMultiplier = getCasinoDifficultyConfig(state.settings.economyDifficulty).blackjackPayoutMultiplier;
+  const activeHand = hand?.status === 'playing' ? hand : null;
+  const shownResult = hand?.result ?? blackjackLastResult;
+  const playerCards = activeHand?.playerCards ?? shownResult?.playerCards ?? [];
+  const dealerCards = activeHand?.dealerCards ?? shownResult?.dealerCards ?? [];
+  const visiblePlayerCards = activeHand && isInitialDealing ? playerCards.slice(0, dealStep >= 3 ? 2 : dealStep >= 1 ? 1 : 0) : playerCards;
+  const dealerVisibleCards =
+    activeHand && isInitialDealing
+      ? dealerCards.slice(0, dealStep >= 2 ? 1 : 0)
+      : activeHand
+        ? dealerCards.slice(0, 1)
+        : dealerCards;
+  const playerTotal = getHandTotal(visiblePlayerCards);
+  const dealerTotal = activeHand ? getHandTotal(dealerVisibleCards) : getHandTotal(dealerCards);
+  const canDeal = state.player.cash >= wager && !activeHand && !isInitialDealing;
+  const canAct = Boolean(activeHand) && !isInitialDealing;
   const resultTone =
-    blackjackLastResult?.outcome === 'win' || blackjackLastResult?.outcome === 'blackjack'
+    shownResult?.outcome === 'win' || shownResult?.outcome === 'blackjack'
       ? 'positive'
-      : blackjackLastResult?.outcome === 'loss'
+      : shownResult?.outcome === 'loss'
         ? 'negative'
         : 'default';
 
@@ -129,25 +286,90 @@ export function BlackjackScreen() {
     [],
   );
 
+  function commitResult(result: BlackjackResult) {
+    settleBlackjack(result);
+    setHand((current) => (current ? { ...current, status: 'settled', result } : current));
+  }
+
   function handleDeal() {
-    if (!canPlay) {
+    if (!canDeal) {
       return;
     }
 
-    setIsDealing(true);
+    let deck = buildDeck();
+    const playerCards: BlackjackCard[] = [];
+    const dealerCards: BlackjackCard[] = [];
+
+    for (let index = 0; index < 2; index += 1) {
+      const playerDraw = drawCard(deck);
+      playerCards.push(playerDraw.card);
+      deck = playerDraw.deck;
+
+      const dealerDraw = drawCard(deck);
+      dealerCards.push(dealerDraw.card);
+      deck = dealerDraw.deck;
+    }
+
+    const nextHand: HandState = {
+      deck,
+      playerCards,
+      dealerCards,
+      wager,
+      status: 'playing',
+      result: null,
+    };
+    setHand(nextHand);
     setDealStep(0);
+    setIsInitialDealing(true);
     timeoutRefs.current.forEach((timeout) => clearTimeout(timeout));
     timeoutRefs.current = [
-      setTimeout(() => setDealStep(1), 120),
-      setTimeout(() => setDealStep(2), 360),
-      setTimeout(() => setDealStep(3), 600),
-      setTimeout(() => setDealStep(4), 840),
+      setTimeout(() => setDealStep(1), 160),
+      setTimeout(() => setDealStep(2), 460),
+      setTimeout(() => setDealStep(3), 760),
+      setTimeout(() => setDealStep(4), 1060),
       setTimeout(() => {
-        playBlackjack(wager);
-        setIsDealing(false);
-        setDealStep(0);
-      }, 1280),
+        setIsInitialDealing(false);
+
+        if (isBlackjack(playerCards) || isBlackjack(dealerCards)) {
+          commitResult(createResult(playerCards, dealerCards, wager, payoutMultiplier));
+        }
+      }, 1320),
     ];
+  }
+
+  function handleHit() {
+    if (!activeHand) {
+      return;
+    }
+
+    const draw = drawCard(activeHand.deck);
+    const nextPlayerCards = [...activeHand.playerCards, draw.card];
+    const nextHand = {
+      ...activeHand,
+      deck: draw.deck,
+      playerCards: nextPlayerCards,
+    };
+
+    setHand(nextHand);
+
+    if (getHandTotal(nextPlayerCards) > 21) {
+      commitResult(createResult(nextPlayerCards, activeHand.dealerCards, activeHand.wager, payoutMultiplier));
+    }
+  }
+
+  function handleStand() {
+    if (!activeHand) {
+      return;
+    }
+
+    const dealerDraw = drawDealerToRule(activeHand.deck, activeHand.dealerCards);
+    const result = createResult(activeHand.playerCards, dealerDraw.dealerCards, activeHand.wager, payoutMultiplier);
+    setHand({
+      ...activeHand,
+      deck: dealerDraw.deck,
+      dealerCards: dealerDraw.dealerCards,
+    });
+    commitResult(result);
   }
 
   return (
@@ -161,65 +383,117 @@ export function BlackjackScreen() {
 
       <Panel>
         <Text style={styles.panelTitle}>Wager</Text>
-        <AmountSelector amounts={wagerOptions} selectedAmount={wager} onSelectAmount={setWager} />
-        <ActionButton disabled={!canPlay} Icon={Club} onPress={handleDeal} tone="casino">
-          {isDealing ? 'Dealing...' : 'Deal hand'}
+        <WagerInput disabled={Boolean(activeHand) || isInitialDealing} max={state.player.cash} onChange={setWager} value={wager} />
+        <ActionButton disabled={!canDeal} Icon={Club} onPress={handleDeal} tone="casino">
+          Deal
         </ActionButton>
         {state.player.cash < wager ? <Text style={styles.hint}>Not enough cash for this wager.</Text> : null}
       </Panel>
 
       <Panel>
-        <Text style={styles.panelTitle}>Last hand</Text>
-        {isDealing ? (
+        <View style={styles.hand}>
+          <View style={styles.handHeader}>
+            <Text style={styles.handLabel}>Dealer</Text>
+            <Text style={styles.handTotal}>{dealerVisibleCards.length > 0 ? dealerTotal : '-'}</Text>
+          </View>
+          <View style={styles.cardRow}>
+            {dealerCards.length > 0 ? (
+              dealerCards.map((card, index) => (
+                <CardTile
+                  card={card}
+                  faceDown={Boolean(activeHand && (index === 1 || (isInitialDealing && index === 0 && dealStep < 2)))}
+                  index={index}
+                  key={`dealer-${card.rank}-${card.suit}-${index}`}
+                />
+              ))
+            ) : (
+              <Text style={styles.empty}>-</Text>
+            )}
+          </View>
+        </View>
+
+        <View style={styles.hand}>
+          <View style={styles.handHeader}>
+            <Text style={styles.handLabel}>You</Text>
+            <Text style={styles.handTotal}>{visiblePlayerCards.length > 0 ? playerTotal : '-'}</Text>
+          </View>
+          <View style={styles.cardRow}>
+            {playerCards.length > 0 ? (
+              playerCards.map((card, index) => (
+                <CardTile
+                  card={card}
+                  faceDown={Boolean(activeHand && isInitialDealing && ((index === 0 && dealStep < 1) || (index === 1 && dealStep < 3)))}
+                  index={index}
+                  key={`player-${card.rank}-${card.suit}-${index}`}
+                />
+              ))
+            ) : (
+              <Text style={styles.empty}>-</Text>
+            )}
+          </View>
+        </View>
+
+        {activeHand ? (
+          <View style={styles.actionRow}>
+            <ActionButton disabled={!canAct} onPress={handleHit} tone="primary">
+              Hit
+            </ActionButton>
+            <ActionButton disabled={!canAct} onPress={handleStand} tone="casino">
+              Stand
+            </ActionButton>
+          </View>
+        ) : null}
+
+        {shownResult ? (
           <>
-            <View style={styles.hand}>
-              <Text style={styles.handLabel}>You</Text>
-              <View style={styles.cardRow}>
-                {Array.from({ length: Math.min(dealStep, 2) }).map((_, index) => (
-                  <CardTile faceDown index={index} key={`player-dealing-${index}`} />
-                ))}
-              </View>
-            </View>
-            <View style={styles.hand}>
-              <Text style={styles.handLabel}>Dealer</Text>
-              <View style={styles.cardRow}>
-                {Array.from({ length: Math.max(0, dealStep - 2) }).map((_, index) => (
-                  <CardTile faceDown index={index} key={`dealer-dealing-${index}`} />
-                ))}
-              </View>
-            </View>
-          </>
-        ) : blackjackLastResult ? (
-          <>
-            <View style={styles.hand}>
-              <Text style={styles.handLabel}>You</Text>
-              <View style={styles.cardRow}>
-                {blackjackLastResult.playerCards.map((card, index) => (
-                  <CardTile card={card} index={index} key={`player-${card.rank}-${card.suit}-${index}`} />
-                ))}
-              </View>
-            </View>
-            <View style={styles.hand}>
-              <Text style={styles.handLabel}>Dealer</Text>
-              <View style={styles.cardRow}>
-                {blackjackLastResult.dealerCards.map((card, index) => (
-                  <CardTile card={card} index={index} key={`dealer-${card.rank}-${card.suit}-${index}`} />
-                ))}
-              </View>
-            </View>
-            <InfoRow label="Your total" value={`${blackjackLastResult.playerTotal}`} />
-            <InfoRow label="Dealer total" value={`${blackjackLastResult.dealerTotal}`} />
-            <InfoRow label="Outcome" value={blackjackLastResult.outcome} tone={resultTone} />
+            <InfoRow label="Outcome" value={shownResult.outcome} tone={resultTone} />
+            <InfoRow label="Dealer total" value={`${shownResult.dealerTotal}`} />
             <InfoRow
               label="Net"
-              value={formatMoney(blackjackLastResult.payout - blackjackLastResult.wager)}
+              value={formatMoney(shownResult.payout - shownResult.wager)}
               tone={resultTone}
             />
           </>
-        ) : (
-          <Text style={styles.empty}>-</Text>
-        )}
+        ) : null}
       </Panel>
+
+      <Pressable
+        accessibilityLabel="Blackjack rules"
+        accessibilityRole="button"
+        onPress={() => setShowRules(true)}
+        style={({ pressed }) => [styles.rulesButton, pressed && styles.pressed]}
+      >
+        <BookOpen color={colors.text} size={20} strokeWidth={2.3} />
+      </Pressable>
+
+      <Modal animationType="fade" transparent visible={showRules} onRequestClose={() => setShowRules(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.rulesSheet}>
+            <View style={styles.rulesHeader}>
+              <Text style={styles.rulesTitle}>Blackjack rules</Text>
+              <Pressable
+                accessibilityLabel="Close rules"
+                accessibilityRole="button"
+                onPress={() => setShowRules(false)}
+                style={({ pressed }) => [styles.closeButton, pressed && styles.pressed]}
+              >
+                <X color={colors.textMuted} size={18} strokeWidth={2.4} />
+              </Pressable>
+            </View>
+
+            <View style={styles.ruleList}>
+              <Text style={styles.ruleText}>Get closer to 21 than the dealer.</Text>
+              <Text style={styles.ruleText}>The deck is shuffled once on Deal, then every Hit and dealer draw uses that same deck.</Text>
+              <Text style={styles.ruleText}>Number cards count as shown. J, Q and K count as 10.</Text>
+              <Text style={styles.ruleText}>Ace counts as 11, but becomes 1 if your hand would go over 21.</Text>
+              <Text style={styles.ruleText}>Hit draws one card. Stand ends your turn.</Text>
+              <Text style={styles.ruleText}>Dealer reveals the hidden card and draws until 17 or more.</Text>
+              <Text style={styles.ruleText}>Over 21 is bust. Same total is push and returns the wager.</Text>
+              <Text style={styles.ruleText}>Normal win pays 2x. Blackjack pays 2.5x.</Text>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </>
   );
 }
@@ -236,13 +510,20 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   hand: {
-    minHeight: 94,
+    minHeight: 106,
     borderRadius: 8,
     borderColor: colors.border,
     borderWidth: StyleSheet.hairlineWidth,
     backgroundColor: colors.background,
     paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
     justifyContent: 'center',
+  },
+  handHeader: {
+    minHeight: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   handLabel: {
     color: colors.textMuted,
@@ -250,6 +531,12 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '800',
     textTransform: 'uppercase',
+  },
+  handTotal: {
+    color: colors.text,
+    fontFamily: typography.family,
+    fontSize: 12,
+    fontWeight: '900',
   },
   cardRow: {
     flexDirection: 'row',
@@ -313,12 +600,74 @@ const styles = StyleSheet.create({
   cardRed: {
     color: colors.negative,
   },
-  cards: {
+  actionRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  rulesButton: {
+    position: 'absolute',
+    right: spacing.lg,
+    bottom: spacing.lg,
+    zIndex: 10,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderColor: colors.border,
+    borderWidth: StyleSheet.hairlineWidth,
+    backgroundColor: colors.surfaceRaised,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.68)',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    padding: spacing.lg,
+  },
+  rulesSheet: {
+    width: '100%',
+    maxWidth: 420,
+    borderRadius: 8,
+    borderColor: colors.border,
+    borderWidth: StyleSheet.hairlineWidth,
+    backgroundColor: colors.surface,
+    padding: spacing.lg,
+    gap: spacing.md,
+  },
+  rulesHeader: {
+    minHeight: 36,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+  },
+  rulesTitle: {
     color: colors.text,
     fontFamily: typography.family,
-    fontSize: 20,
+    fontSize: 17,
     fontWeight: '900',
-    marginTop: 2,
+  },
+  closeButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ruleList: {
+    gap: spacing.sm,
+  },
+  ruleText: {
+    color: colors.textMuted,
+    fontFamily: typography.family,
+    fontSize: 13,
+    fontWeight: '700',
+    lineHeight: 18,
+  },
+  pressed: {
+    opacity: 0.72,
   },
   empty: {
     color: colors.textMuted,

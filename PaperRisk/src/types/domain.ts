@@ -33,7 +33,7 @@ export type PlayerState = {
   positions: PortfolioPosition[];
 };
 
-export type SlotsResultTier = 'none' | 'small' | 'medium' | 'big' | 'jackpot';
+export type SlotsResultTier = 'none' | 'mini' | 'small' | 'medium' | 'big' | 'mega' | 'jackpot';
 
 export type SlotsResult = {
   symbols: string[];
@@ -95,6 +95,35 @@ export type FortuneWheelResult = {
   isJackpot: boolean;
 };
 
+export type CrashResult = {
+  wager: number;
+  crashMultiplier: number;
+  cashoutMultiplier: number | null;
+  payout: number;
+  outcome: 'cashout' | 'crash';
+};
+
+export type PlinkoRisk = 'low' | 'medium' | 'high';
+
+export type PlinkoResult = {
+  wager: number;
+  rows: number;
+  risk: PlinkoRisk;
+  slotIndex: number;
+  multiplier: number;
+  payout: number;
+  path: number[];
+};
+
+export type MinesResult = {
+  wager: number;
+  mineCount: number;
+  safePicks: number;
+  multiplier: number;
+  payout: number;
+  outcome: 'cashout' | 'loss';
+};
+
 export type CasinoState = {
   tokens: number;
   slotsLosingStreak: number;
@@ -102,6 +131,9 @@ export type CasinoState = {
   blackjackLastResult: BlackjackResult | null;
   rouletteLastResult: RouletteResult | null;
   fortuneWheelLastResult: FortuneWheelResult | null;
+  crashLastResult: CrashResult | null;
+  plinkoLastResult: PlinkoResult | null;
+  minesLastResult: MinesResult | null;
 };
 
 export type TransactionType = 'system' | 'borrow' | 'repay' | 'interest' | 'buy' | 'sell' | 'casino';

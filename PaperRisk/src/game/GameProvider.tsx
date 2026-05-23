@@ -3,7 +3,18 @@ import { createContext, useContext, useEffect, useMemo, useReducer, useState } f
 
 import { createInitialGameState } from '../data/initialState';
 import { clearGameState, loadGameState, saveGameState } from '../storage/storage';
-import type { FortuneWheelResult, GameState, RouletteBet, RouletteResult, SlotsResult } from '../types/domain';
+import type {
+  BlackjackResult,
+  CrashResult,
+  FortuneWheelResult,
+  GameState,
+  MinesResult,
+  PlinkoResult,
+  PlinkoRisk,
+  RouletteBet,
+  RouletteResult,
+  SlotsResult,
+} from '../types/domain';
 import { gameReducer } from './reducer';
 
 export type SaveStatus = 'loading' | 'saved' | 'saving' | 'error';
@@ -21,7 +32,11 @@ type GameContextValue = {
   buyTokens: (packId: string) => void;
   spinSlots: (result?: SlotsResult) => void;
   spinFortuneWheel: (sectionCount: number, result?: FortuneWheelResult) => void;
+  settleCrash: (wager: number, crashMultiplier: number, cashoutMultiplier: number | null, result?: CrashResult) => void;
+  playPlinko: (wager: number, rows: number, risk: PlinkoRisk, result?: PlinkoResult) => void;
+  settleMines: (wager: number, mineCount: number, safePicks: number, didHitMine: boolean, result?: MinesResult) => void;
   playBlackjack: (wager: number) => void;
+  settleBlackjack: (result: BlackjackResult) => void;
   playRoulette: (bet: RouletteBet, wager: number, result?: RouletteResult) => void;
   buyAsset: (assetId: string, shares: number) => void;
   sellAsset: (assetId: string, shares: number) => void;
@@ -126,7 +141,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
       spinSlots: (result?: SlotsResult) => dispatch({ type: 'spinSlots', result }),
       spinFortuneWheel: (sectionCount: number, result?: FortuneWheelResult) =>
         dispatch({ type: 'spinFortuneWheel', sectionCount, result }),
+      settleCrash: (wager: number, crashMultiplier: number, cashoutMultiplier: number | null, result?: CrashResult) =>
+        dispatch({ type: 'settleCrash', wager, crashMultiplier, cashoutMultiplier, result }),
+      playPlinko: (wager: number, rows: number, risk: PlinkoRisk, result?: PlinkoResult) =>
+        dispatch({ type: 'playPlinko', wager, rows, risk, result }),
+      settleMines: (wager: number, mineCount: number, safePicks: number, didHitMine: boolean, result?: MinesResult) =>
+        dispatch({ type: 'settleMines', wager, mineCount, safePicks, didHitMine, result }),
       playBlackjack: (wager: number) => dispatch({ type: 'playBlackjack', wager }),
+      settleBlackjack: (result: BlackjackResult) => dispatch({ type: 'settleBlackjack', result }),
       playRoulette: (bet: RouletteBet, wager: number, result?: RouletteResult) =>
         dispatch({ type: 'playRoulette', bet, wager, result }),
       buyAsset: (assetId: string, shares: number) => dispatch({ type: 'buyAsset', assetId, shares }),

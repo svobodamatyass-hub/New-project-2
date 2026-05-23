@@ -13,7 +13,7 @@ import type { SlotsResult } from '../types/domain';
 import { colors, spacing, typography } from '../theme';
 
 const reelHeight = 92;
-const spinDurations = [1750, 2050, 2350];
+const spinDurations = [750, 1050, 1350];
 
 function pickRandomSymbol() {
   return slotsSymbols[Math.floor(Math.random() * slotsSymbols.length)];

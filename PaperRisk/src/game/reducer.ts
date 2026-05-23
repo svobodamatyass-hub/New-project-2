@@ -1,11 +1,14 @@
 import { createInitialGameState, initialCasino } from '../data/initialState';
 import {
   getCasinoDifficultyConfig,
+  settleMinesRound,
   fortuneWheelTokenCost,
   getSlotsWinChance,
+  playPlinko,
   playBlackjack,
   playRoulette,
   getRouletteBetLabel,
+  settleCrash,
   slotsSymbols,
   spinFortuneWheel,
   spinSlots,
@@ -14,7 +17,19 @@ import {
 import { calculateInterestCharge, getRemainingCredit } from '../domain/finance';
 import { normalizeAssetHistory, simulateAssetTickWithMultiplier } from '../domain/marketSimulation';
 import { getEconomyDifficultyFactors } from '../domain/economy';
-import type { FortuneWheelResult, GameState, RouletteBet, RouletteResult, SlotsResult, Transaction } from '../types/domain';
+import type {
+  BlackjackResult,
+  CrashResult,
+  FortuneWheelResult,
+  GameState,
+  MinesResult,
+  PlinkoResult,
+  PlinkoRisk,
+  RouletteBet,
+  RouletteResult,
+  SlotsResult,
+  Transaction,
+} from '../types/domain';
 import { getAssetById, getPositionByAssetId, hydrateComputedPlayer } from './selectors';
 
 const INTEREST_INTERVAL_MS = 1000 * 60 * 60 * 2;
@@ -29,7 +44,11 @@ export type GameAction =
   | { type: 'buyTokens'; packId: string }
   | { type: 'spinSlots'; result?: SlotsResult }
   | { type: 'spinFortuneWheel'; sectionCount: number; result?: FortuneWheelResult }
+  | { type: 'settleCrash'; wager: number; crashMultiplier: number; cashoutMultiplier: number | null; result?: CrashResult }
+  | { type: 'playPlinko'; wager: number; rows: number; risk: PlinkoRisk; result?: PlinkoResult }
+  | { type: 'settleMines'; wager: number; mineCount: number; safePicks: number; didHitMine: boolean; result?: MinesResult }
   | { type: 'playBlackjack'; wager: number }
+  | { type: 'settleBlackjack'; result: BlackjackResult }
   | { type: 'playRoulette'; wager: number; bet: RouletteBet; result?: RouletteResult }
   | { type: 'buyAsset'; assetId: string; shares: number }
   | { type: 'sellAsset'; assetId: string; shares: number }
@@ -323,6 +342,111 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       });
     }
 
+    case 'settleCrash': {
+      const wager = Math.min(Math.max(0, Math.round(action.wager)), state.player.cash);
+
+      if (wager <= 0) {
+        return state;
+      }
+
+      const result = action.result ?? settleCrash(wager, action.crashMultiplier, action.cashoutMultiplier);
+      const netAmount = result.payout - wager;
+
+      return finalizeState({
+        ...state,
+        casino: {
+          ...state.casino,
+          crashLastResult: result,
+        },
+        player: {
+          ...state.player,
+          cash: state.player.cash + netAmount,
+          casinoProfit: state.player.casinoProfit + netAmount,
+        },
+        transactions: [
+          createTransaction({
+            type: 'casino',
+            title: result.outcome === 'cashout' ? 'Crash cash out' : 'Crash loss',
+            amount: netAmount,
+            description:
+              result.outcome === 'cashout'
+                ? `${result.cashoutMultiplier?.toFixed(2)}x before ${result.crashMultiplier.toFixed(2)}x.`
+                : `Crashed at ${result.crashMultiplier.toFixed(2)}x.`,
+          }),
+          ...state.transactions,
+        ],
+      });
+    }
+
+    case 'playPlinko': {
+      const wager = Math.min(Math.max(0, Math.round(action.wager)), state.player.cash);
+
+      if (wager <= 0) {
+        return state;
+      }
+
+      const result = action.result ?? playPlinko(wager, action.rows, action.risk);
+      const netAmount = result.payout - wager;
+
+      return finalizeState({
+        ...state,
+        casino: {
+          ...state.casino,
+          plinkoLastResult: result,
+        },
+        player: {
+          ...state.player,
+          cash: state.player.cash + netAmount,
+          casinoProfit: state.player.casinoProfit + netAmount,
+        },
+        transactions: [
+          createTransaction({
+            type: 'casino',
+            title: 'Plinko drop',
+            amount: netAmount,
+            description: `${result.risk} risk, ${result.rows} rows, ${result.multiplier.toFixed(2)}x slot.`,
+          }),
+          ...state.transactions,
+        ],
+      });
+    }
+
+    case 'settleMines': {
+      const wager = Math.min(Math.max(0, Math.round(action.wager)), state.player.cash);
+
+      if (wager <= 0) {
+        return state;
+      }
+
+      const result = action.result ?? settleMinesRound(wager, action.mineCount, action.safePicks, action.didHitMine);
+      const netAmount = result.payout - wager;
+
+      return finalizeState({
+        ...state,
+        casino: {
+          ...state.casino,
+          minesLastResult: result,
+        },
+        player: {
+          ...state.player,
+          cash: state.player.cash + netAmount,
+          casinoProfit: state.player.casinoProfit + netAmount,
+        },
+        transactions: [
+          createTransaction({
+            type: 'casino',
+            title: result.outcome === 'cashout' ? 'Mines cashout' : 'Mines loss',
+            amount: netAmount,
+            description:
+              result.outcome === 'cashout'
+                ? `${result.safePicks} safe pick${result.safePicks === 1 ? '' : 's'} at ${result.multiplier.toFixed(2)}x.`
+                : `Mine hit after ${result.safePicks} safe pick${result.safePicks === 1 ? '' : 's'}.`,
+          }),
+          ...state.transactions,
+        ],
+      });
+    }
+
     case 'playBlackjack': {
       const wager = Math.min(Math.max(0, Math.round(action.wager)), state.player.cash);
 
@@ -351,6 +475,33 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             title: `Blackjack ${result.outcome}`,
             amount: netAmount,
             description: `You ${result.playerTotal}, dealer ${result.dealerTotal}, wager ${wager} CZK.`,
+          }),
+          ...state.transactions,
+        ],
+      });
+    }
+
+    case 'settleBlackjack': {
+      const result = action.result;
+      const netAmount = result.payout - result.wager;
+
+      return finalizeState({
+        ...state,
+        casino: {
+          ...state.casino,
+          blackjackLastResult: result,
+        },
+        player: {
+          ...state.player,
+          cash: state.player.cash + netAmount,
+          casinoProfit: state.player.casinoProfit + netAmount,
+        },
+        transactions: [
+          createTransaction({
+            type: 'casino',
+            title: `Blackjack ${result.outcome}`,
+            amount: netAmount,
+            description: `You ${result.playerTotal}, dealer ${result.dealerTotal}, wager ${result.wager} CZK.`,
           }),
           ...state.transactions,
         ],

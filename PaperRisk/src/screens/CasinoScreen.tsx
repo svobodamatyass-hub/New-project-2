@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, CircleDot, CircleDotDashed, Club, Gem } from 'lucide-react-native';
+import { ArrowLeft, Bomb, CircleDot, CircleDotDashed, CirclePlay, Club, Gem, TrendingUp } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Badge } from '../components/Badge';
@@ -11,17 +11,23 @@ import { getActiveProfileLabel } from '../domain/settingsProfile';
 import { colors, spacing, typography, webFocusReset } from '../theme';
 import { useGame } from '../game/GameProvider';
 import { BlackjackScreen } from './BlackjackScreen';
+import { CrashScreen } from './CrashScreen';
 import { FortuneWheelScreen } from './FortuneWheelScreen';
+import { MinesScreen } from './MinesScreen';
+import { PlinkoScreen } from './PlinkoScreen';
 import { RouletteScreen } from './RouletteScreen';
 import { SlotsScreen } from './SlotsScreen';
 
-type CasinoView = 'hub' | 'slots' | 'blackjack' | 'roulette' | 'fortune';
+type CasinoView = 'hub' | 'slots' | 'blackjack' | 'roulette' | 'fortune' | 'crash' | 'plinko' | 'mines';
 
 const icons = {
   slots: Gem,
   blackjack: Club,
   roulette: CircleDot,
   fortune: CircleDotDashed,
+  crash: TrendingUp,
+  plinko: CirclePlay,
+  mines: Bomb,
 };
 
 export function CasinoScreen() {
@@ -81,6 +87,9 @@ export function CasinoScreen() {
       {casinoView === 'blackjack' ? <BlackjackScreen /> : null}
       {casinoView === 'roulette' ? <RouletteScreen /> : null}
       {casinoView === 'fortune' ? <FortuneWheelScreen /> : null}
+      {casinoView === 'crash' ? <CrashScreen /> : null}
+      {casinoView === 'plinko' ? <PlinkoScreen /> : null}
+      {casinoView === 'mines' ? <MinesScreen /> : null}
     </Screen>
   );
 }

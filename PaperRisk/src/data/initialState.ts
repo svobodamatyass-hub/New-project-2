@@ -83,7 +83,7 @@ export const initialCasino: CasinoState = {
   tokens: 0,
   slotsLosingStreak: 0,
   slotsLastResult: {
-    symbols: ['7', 'BAR', 'DIA'],
+    symbols: ['\u{1F4B0}', '\u{1F48E}', '\u{2B50}'],
     tier: 'none',
     payout: 0,
     winChance: slotsBaseWinChance,
@@ -91,6 +91,9 @@ export const initialCasino: CasinoState = {
   blackjackLastResult: null,
   rouletteLastResult: null,
   fortuneWheelLastResult: null,
+  crashLastResult: null,
+  plinkoLastResult: null,
+  minesLastResult: null,
 };
 
 const initialTransactions: Transaction[] = [

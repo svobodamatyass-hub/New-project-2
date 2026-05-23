@@ -4,11 +4,11 @@ import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-nativ
 import Svg, { Circle, G, Path, Text as SvgText } from 'react-native-svg';
 
 import { ActionButton } from '../components/ActionButton';
-import { AmountSelector } from '../components/AmountSelector';
 import { InfoRow } from '../components/InfoRow';
 import { Panel } from '../components/Panel';
 import { SectionHeader } from '../components/SectionHeader';
 import { StatTile } from '../components/StatTile';
+import { WagerInput } from '../components/WagerInput';
 import {
   europeanRouletteNumbers,
   getCasinoDifficultyConfig,
@@ -23,7 +23,6 @@ import { useGame } from '../game/GameProvider';
 import type { RouletteBet, RouletteResult } from '../types/domain';
 import { colors, spacing, typography, webFocusReset } from '../theme';
 
-const wagerOptions = [250, 500, 1000];
 const wheelSize = 218;
 const wheelCenter = wheelSize / 2;
 const outerRadius = 104;
@@ -107,7 +106,7 @@ function RouletteWheel() {
 }
 
 export function RouletteScreen() {
-  const [wager, setWager] = useState(wagerOptions[1]);
+  const [wager, setWager] = useState(500);
   const [bet, setBet] = useState<RouletteBet>({ type: 'color', color: 'red' });
   const [isSpinning, setIsSpinning] = useState(false);
   const [rollingNumber, setRollingNumber] = useState(0);
@@ -200,6 +199,10 @@ export function RouletteScreen() {
             <Text style={styles.resultColor}>{isSpinning ? 'spin' : result?.color ?? '-'}</Text>
           </View>
         </View>
+
+        <ActionButton disabled={!canPlay} Icon={CircleDot} onPress={handleSpin} tone="casino">
+          {isSpinning ? 'Spinning...' : 'Spin'}
+        </ActionButton>
 
         {rouletteLastResult ? (
           <>
@@ -300,10 +303,7 @@ export function RouletteScreen() {
         </View>
 
         <Text style={styles.panelTitle}>Wager</Text>
-        <AmountSelector amounts={wagerOptions} selectedAmount={wager} onSelectAmount={setWager} />
-        <ActionButton disabled={!canPlay} Icon={CircleDot} onPress={handleSpin} tone="casino">
-          {isSpinning ? 'Spinning...' : 'Spin selected bet'}
-        </ActionButton>
+        <WagerInput disabled={isSpinning} max={state.player.cash} onChange={setWager} value={wager} />
         {state.player.cash < wager ? <Text style={styles.hint}>Not enough cash for this wager.</Text> : null}
       </Panel>
     </>

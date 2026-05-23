@@ -21,11 +21,18 @@ npm run typecheck
 
 ## APK build (GitHub Actions)
 
+Direct APK download:
+
+[Download PaperRisk-latest.apk](https://github.com/svobodamatyass-hub/New-project-2/releases/download/android-latest/PaperRisk-latest.apk)
+
+If the download is not ready yet:
+
 1. Open repository: [New-project-2](https://github.com/svobodamatyass-hub/New-project-2)
 2. Go to the `Actions` tab.
 3. Run workflow `Build Android APK` (button `Run workflow`).
-4. After the run finishes, open the run and download artifact `PaperRisk-app-debug`.
-5. Install `app-debug.apk` on your phone.
+4. After the run finishes, open `Releases`.
+5. Download `PaperRisk-latest.apk` from `PaperRisk Android APK`.
+6. Install it on your phone.
 
 You can still build locally with EAS if you want, but GitHub Actions is the easiest download path from git.
 

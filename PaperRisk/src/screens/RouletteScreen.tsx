@@ -4,6 +4,7 @@ import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-nativ
 import Svg, { Circle, G, Path, Text as SvgText } from 'react-native-svg';
 
 import { ActionButton } from '../components/ActionButton';
+import { CasinoResultBanner } from '../components/CasinoResultBanner';
 import { InfoRow } from '../components/InfoRow';
 import { Panel } from '../components/Panel';
 import { SectionHeader } from '../components/SectionHeader';
@@ -18,6 +19,7 @@ import {
   playRoulette as createRouletteResult,
   rouletteColorBets,
 } from '../domain/casino';
+import { useCasinoFeedback } from '../feedback/useCasinoFeedback';
 import { formatMoney } from '../domain/finance';
 import { useGame } from '../game/GameProvider';
 import type { RouletteBet, RouletteResult } from '../types/domain';
@@ -114,6 +116,7 @@ export function RouletteScreen() {
   const wheelRotation = useRef(new Animated.Value(0)).current;
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const { playRoulette: commitRouletteResult, state } = useGame();
+  const feedback = useCasinoFeedback();
   const { rouletteLastResult } = state.casino;
   const canPlay = state.player.cash >= wager && !isSpinning;
   const result = pendingResult ?? rouletteLastResult;
@@ -144,6 +147,7 @@ export function RouletteScreen() {
     });
     const targetRotation = wheelSpinDegrees - (nextResult.pocketIndex + 0.5) * pocketAngle;
 
+    feedback.rouletteSpinStart();
     setPendingResult(nextResult);
     setRollingNumber(nextResult.number);
     setIsSpinning(true);
@@ -164,6 +168,7 @@ export function RouletteScreen() {
       }
 
       setRollingNumber(nextResult.number);
+      feedback.rouletteResult(nextResult.payout > 0);
       commitRouletteResult(bet, wager, nextResult);
       setIsSpinning(false);
       setPendingResult(null);
@@ -203,6 +208,15 @@ export function RouletteScreen() {
         <ActionButton disabled={!canPlay} Icon={CircleDot} onPress={handleSpin} tone="casino">
           {isSpinning ? 'Spinning...' : 'Spin'}
         </ActionButton>
+
+        {rouletteLastResult ? (
+          <CasinoResultBanner
+            caption="Last spin"
+            title={`${rouletteLastResult.number} ${rouletteLastResult.color}`}
+            tone={wonLastSpin ? 'positive' : 'negative'}
+            value={formatMoney(rouletteLastResult.payout - rouletteLastResult.wager)}
+          />
+        ) : null}
 
         {rouletteLastResult ? (
           <>

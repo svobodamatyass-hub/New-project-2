@@ -4,6 +4,7 @@ import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-nativ
 import Svg, { Circle, Defs, LinearGradient, Rect, Stop, Text as SvgText } from 'react-native-svg';
 
 import { ActionButton } from '../components/ActionButton';
+import { CasinoResultBanner } from '../components/CasinoResultBanner';
 import { InfoRow } from '../components/InfoRow';
 import { Panel } from '../components/Panel';
 import { SectionHeader } from '../components/SectionHeader';
@@ -440,6 +441,12 @@ export function PlinkoScreen() {
 
       {latestResult ? (
         <Panel>
+          <CasinoResultBanner
+            caption="Last drop"
+            title={formatMultiplier(latestResult.multiplier)}
+            tone={lastBatchNet >= 0 ? 'positive' : 'negative'}
+            value={formatMoney(lastBatchNet)}
+          />
           <InfoRow label="Rows" value={`${latestResult.rows}`} />
           <InfoRow label="Risk" value={latestResult.risk} />
           <InfoRow label="Last lane" value={formatMultiplier(latestResult.multiplier)} tone={latestResult.multiplier >= 1 ? 'positive' : 'negative'} />

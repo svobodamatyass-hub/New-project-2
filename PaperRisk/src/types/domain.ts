@@ -1,22 +1,5 @@
 export type CurrencyCode = 'CZK';
 
-export type Asset = {
-  id: string;
-  symbol: string;
-  name: string;
-  sector: string;
-  price: number;
-  priceHistory: number[];
-  changePercent: number;
-  volatility: 'low' | 'medium' | 'high';
-};
-
-export type PortfolioPosition = {
-  assetId: string;
-  shares: number;
-  averagePrice: number;
-};
-
 export type LoanState = {
   principal: number;
   interestRate: number;
@@ -27,10 +10,8 @@ export type PlayerState = {
   currency: CurrencyCode;
   cash: number;
   netWorth: number;
-  invested: number;
   casinoProfit: number;
   loan: LoanState;
-  positions: PortfolioPosition[];
 };
 
 export type SlotsResultTier = 'none' | 'mini' | 'small' | 'medium' | 'big' | 'mega' | 'jackpot';
@@ -136,7 +117,7 @@ export type CasinoState = {
   minesLastResult: MinesResult | null;
 };
 
-export type TransactionType = 'system' | 'borrow' | 'repay' | 'interest' | 'buy' | 'sell' | 'casino';
+export type TransactionType = 'system' | 'borrow' | 'repay' | 'interest' | 'casino';
 
 export type Transaction = {
   id: string;
@@ -150,13 +131,21 @@ export type Transaction = {
 export type GameState = {
   version: 1;
   settings: {
-    marketSpeed: 'slow' | 'normal' | 'fast';
-    marketVolatility: 'low' | 'normal' | 'high';
     economyDifficulty: 'easy' | 'normal' | 'hard';
+    feedback: {
+      masterMute: boolean;
+      hapticsIntensity: number;
+      blackjackVolume: number;
+      rouletteVolume: number;
+    };
+    adminTuning: {
+      slotsWinChanceOffset: number;
+      slotsPayoutMultiplier: number;
+      plinkoPayoutMultiplier: number;
+    };
   };
   player: PlayerState;
   casino: CasinoState;
-  assets: Asset[];
   transactions: Transaction[];
   updatedAt: string;
 };

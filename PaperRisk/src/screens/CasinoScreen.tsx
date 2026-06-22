@@ -4,9 +4,12 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Badge } from '../components/Badge';
 import { BrandHeader } from '../components/BrandHeader';
+import { Panel } from '../components/Panel';
 import { Screen } from '../components/Screen';
 import { SectionHeader } from '../components/SectionHeader';
+import { StatTile } from '../components/StatTile';
 import { casinoGames } from '../domain/casino';
+import { formatMoney } from '../domain/finance';
 import { getActiveProfileLabel } from '../domain/settingsProfile';
 import { colors, spacing, typography, webFocusReset } from '../theme';
 import { useGame } from '../game/GameProvider';
@@ -55,6 +58,13 @@ export function CasinoScreen() {
         <>
           <SectionHeader title="Games" />
 
+          <Panel>
+            <View style={styles.statsRow}>
+              <StatTile label="Cash" value={formatMoney(state.player.cash)} />
+              <StatTile label="Tokens" tone={state.casino.tokens > 0 ? 'warning' : 'default'} value={`${state.casino.tokens}`} />
+            </View>
+          </Panel>
+
           <View style={styles.list}>
             {casinoGames.map((game) => {
               const Icon = icons[game.id];
@@ -74,8 +84,9 @@ export function CasinoScreen() {
                   </View>
                   <View style={styles.copy}>
                     <Text style={styles.title}>{game.title}</Text>
+                    <Text style={styles.description}>{game.description}</Text>
                   </View>
-                  <Badge label="Play" tone={game.accent} />
+                  <Badge label="Open" tone={game.accent} />
                 </Pressable>
               );
             })}
@@ -116,6 +127,10 @@ const styles = StyleSheet.create({
   list: {
     gap: spacing.md,
   },
+  statsRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
   card: {
     minHeight: 92,
     borderColor: colors.border,
@@ -149,5 +164,13 @@ const styles = StyleSheet.create({
     fontFamily: typography.family,
     fontSize: 18,
     fontWeight: '800',
+  },
+  description: {
+    color: colors.textFaint,
+    fontFamily: typography.family,
+    fontSize: 12,
+    fontWeight: '700',
+    lineHeight: 16,
+    marginTop: 4,
   },
 });

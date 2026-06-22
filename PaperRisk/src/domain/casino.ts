@@ -93,7 +93,7 @@ export const minesColumns = 5;
 export const minesTileCount = minesColumns * minesColumns;
 export const minesMinCount = 1;
 export const minesMaxCount = 24;
-export const minesHouseEdge = 0.96;
+export const minesHouseEdge = 0.97;
 
 export type CasinoDifficulty = 'easy' | 'normal' | 'hard';
 
@@ -113,7 +113,7 @@ export function getCasinoDifficultyConfig(difficulty: CasinoDifficulty): CasinoD
         slotsPayoutMultiplier: 1.1,
         rouletteBoostOffset: 0.02,
         roulettePayoutMultiplier: 1.05,
-        blackjackPayoutMultiplier: 1.05,
+        blackjackPayoutMultiplier: 1,
       };
     case 'hard':
       return {
@@ -121,7 +121,7 @@ export function getCasinoDifficultyConfig(difficulty: CasinoDifficulty): CasinoD
         slotsPayoutMultiplier: 0.9,
         rouletteBoostOffset: -0.015,
         roulettePayoutMultiplier: 0.93,
-        blackjackPayoutMultiplier: 0.94,
+        blackjackPayoutMultiplier: 1,
       };
     case 'normal':
     default:
@@ -158,18 +158,18 @@ const slotsSymbolWeights: Record<(typeof slotsSymbols)[number], number> = {
 };
 
 const slotsPayouts: Record<(typeof slotsSymbols)[number], { double: number; triple: number }> = {
-  '\u{1F352}': { double: 45, triple: 140 },
-  '\u{1F34B}': { double: 50, triple: 165 },
-  '\u{1F48E}': { double: 220, triple: 900 },
-  '\u{1F4B0}': { double: 260, triple: 1500 },
-  '\u{1F525}': { double: 70, triple: 260 },
-  '\u{2B50}': { double: 90, triple: 360 },
-  '\u{1F514}': { double: 38, triple: 120 },
-  '\u{1F451}': { double: 180, triple: 720 },
-  '\u{1F37C}': { double: 35, triple: 105 },
-  '\u{1F389}': { double: 65, triple: 240 },
-  '\u{1F680}': { double: 240, triple: 1100 },
-  '\u{26A1}': { double: 110, triple: 420 },
+  '\u{1F352}': { double: 55, triple: 180 },
+  '\u{1F34B}': { double: 65, triple: 220 },
+  '\u{1F48E}': { double: 320, triple: 1700 },
+  '\u{1F4B0}': { double: 380, triple: 2600 },
+  '\u{1F525}': { double: 95, triple: 340 },
+  '\u{2B50}': { double: 125, triple: 520 },
+  '\u{1F514}': { double: 45, triple: 150 },
+  '\u{1F451}': { double: 270, triple: 1400 },
+  '\u{1F37C}': { double: 40, triple: 130 },
+  '\u{1F389}': { double: 90, triple: 320 },
+  '\u{1F680}': { double: 360, triple: 2400 },
+  '\u{26A1}': { double: 160, triple: 700 },
 };
 
 function pickWeightedSymbol() {
@@ -225,7 +225,9 @@ function evaluateSlotsSymbols(symbols: string[]) {
   const sorted = [...counts.entries()].sort((left, right) => right[1] - left[1]);
   const [topSymbol, topCount] = sorted[0] ?? [slotsSymbols[0], 0];
   const premiumMix = symbols.every((symbol) => slotsPremiumSymbols.includes(symbol));
-  const hotMix = symbols.filter((symbol) => slotsHotSymbols.includes(symbol)).length >= 2;
+  const hotCount = symbols.filter((symbol) => slotsHotSymbols.includes(symbol)).length;
+  const premiumCount = symbols.filter((symbol) => slotsPremiumSymbols.includes(symbol)).length;
+  const distinctCount = counts.size;
 
   if (topCount === 3) {
     const payout = slotsPayouts[topSymbol as (typeof slotsSymbols)[number]]?.triple ?? 0;
@@ -238,37 +240,52 @@ function evaluateSlotsSymbols(symbols: string[]) {
   }
 
   if (premiumMix) {
-    return { payout: 160, tier: getSlotsTier(160) };
+    return { payout: 380, tier: getSlotsTier(380) };
   }
 
-  if (hotMix) {
-    return { payout: 75, tier: getSlotsTier(75) };
+  if (premiumCount >= 2) {
+    return { payout: 210, tier: getSlotsTier(210) };
+  }
+
+  if (hotCount === 3) {
+    return { payout: 190, tier: getSlotsTier(190) };
+  }
+
+  if (hotCount >= 2) {
+    return { payout: 95, tier: getSlotsTier(95) };
+  }
+
+  if (distinctCount === 3 && symbols.includes('\u{1F4B0}') && symbols.includes('\u{1F48E}')) {
+    return { payout: 140, tier: getSlotsTier(140) };
+  }
+
+  if (distinctCount === 3 && symbols.includes('\u{1F680}') && symbols.includes('\u{26A1}')) {
+    return { payout: 120, tier: getSlotsTier(120) };
+  }
+
+  if (distinctCount === 3 && symbols.includes('\u{1F37C}') && symbols.includes('\u{1F389}')) {
+    return { payout: 65, tier: getSlotsTier(65) };
   }
 
   return { payout: 0, tier: 'none' as const };
 }
 
-function generateSlotsSymbols(wantWin: boolean) {
-  for (let attempt = 0; attempt < 200; attempt += 1) {
-    const symbols = [pickWeightedSymbol(), pickWeightedSymbol(), pickWeightedSymbol()];
-    const evaluation = evaluateSlotsSymbols(symbols);
+function generateSlotsSymbols(losingStreak: number, winChanceOffset = 0) {
+  const naturalWinBias = Math.max(0.02, Math.min(0.92, getSlotsWinChance(losingStreak) + winChanceOffset));
+  const matchChance = Math.min(0.4, 0.16 + naturalWinBias * 0.3);
+  const secondMatchesFirst = Math.random() < matchChance;
+  const thirdMatchesPrior = Math.random() < matchChance * 0.92;
 
-    if ((wantWin && evaluation.payout > 0) || (!wantWin && evaluation.payout === 0)) {
-      return {
-        symbols,
-        payout: evaluation.payout,
-        tier: evaluation.tier,
-      };
-    }
-  }
-
-  const fallbackSymbols = wantWin ? ['\u{1F352}', '\u{1F352}', '\u{1F34B}'] : ['\u{1F352}', '\u{1F4B0}', '\u{1F514}'];
-  const fallback = evaluateSlotsSymbols(fallbackSymbols);
+  const first = pickWeightedSymbol();
+  const second = secondMatchesFirst ? first : pickWeightedSymbol();
+  const third = thirdMatchesPrior ? (Math.random() < 0.5 ? first : second) : pickWeightedSymbol();
+  const symbols = [first, second, third];
+  const evaluation = evaluateSlotsSymbols(symbols);
 
   return {
-    symbols: fallbackSymbols,
-    payout: fallback.payout,
-    tier: fallback.tier,
+    symbols,
+    payout: evaluation.payout,
+    tier: evaluation.tier,
   };
 }
 
@@ -282,8 +299,7 @@ export function spinSlots(
   const offset = options?.winChanceOffset ?? 0;
   const payoutMultiplier = options?.payoutMultiplier ?? 1;
   const winChance = Math.max(0.02, Math.min(0.92, getSlotsWinChance(losingStreak) + offset));
-  const isWin = Math.random() < winChance;
-  const baseResult = generateSlotsSymbols(isWin);
+  const baseResult = generateSlotsSymbols(losingStreak, offset);
 
   return {
     symbols: baseResult.symbols,
@@ -384,19 +400,19 @@ export function settleCrash(
 
 const plinkoMultipliers: Record<number, Record<PlinkoRisk, number[]>> = {
   8: {
-    low: [5.6, 2.1, 1.1, 1, 0.5, 1, 1.1, 2.1, 5.6],
-    medium: [13, 3, 1.3, 0.7, 0.4, 0.7, 1.3, 3, 13],
-    high: [29, 4, 1.5, 0.3, 0.2, 0.3, 1.5, 4, 29],
+    low: [5.85, 2.19, 1.1, 0.91, 0.5, 0.91, 1.1, 2.19, 5.85],
+    medium: [13, 3.26, 1.3, 0.62, 0.36, 0.62, 1.3, 3.26, 13],
+    high: [30.2, 4.03, 1.41, 0.27, 0.17, 0.27, 1.41, 4.03, 30.2],
   },
   12: {
-    low: [8.4, 3, 1.9, 1.3, 1, 0.7, 0.5, 0.7, 1, 1.3, 1.9, 3, 8.4],
-    medium: [33, 11, 4, 1.7, 0.9, 0.5, 0.3, 0.5, 0.9, 1.7, 4, 11, 33],
-    high: [170, 24, 8.1, 2, 0.7, 0.2, 0.2, 0.2, 0.7, 2, 8.1, 24, 170],
+    low: [10.5, 3.71, 2.26, 1.49, 1.13, 0.77, 0.57, 0.77, 1.13, 1.49, 2.26, 3.71, 10.5],
+    medium: [39.6, 12.9, 4.82, 1.89, 0.95, 0.52, 0.34, 0.52, 0.95, 1.89, 4.82, 12.9, 39.6],
+    high: [169.6, 24, 8.1, 1.98, 0.64, 0.18, 0.18, 0.18, 0.64, 1.98, 8.1, 24, 169.6],
   },
   16: {
-    low: [16, 9, 2, 1.4, 1.1, 1, 0.7, 0.5, 0.3, 0.5, 0.7, 1, 1.1, 1.4, 2, 9, 16],
-    medium: [110, 41, 10, 5, 3, 1.5, 1, 0.5, 0.3, 0.5, 1, 1.5, 3, 5, 10, 41, 110],
-    high: [1000, 130, 26, 9, 4, 2, 0.2, 0.2, 0.2, 0.2, 0.2, 2, 4, 9, 26, 130, 1000],
+    low: [26.4, 14.6, 3.33, 2.15, 1.67, 1.46, 1.04, 0.76, 0.49, 0.76, 1.04, 1.46, 1.67, 2.15, 3.33, 14.6, 26.4],
+    medium: [114.1, 41.8, 10.6, 5.17, 2.89, 1.45, 0.91, 0.49, 0.3, 0.49, 0.91, 1.45, 2.89, 5.17, 10.6, 41.8, 114.1],
+    high: [1002.4, 128.9, 25.8, 8.6, 3.94, 1.86, 0.2, 0.2, 0.2, 0.2, 0.2, 1.86, 3.94, 8.6, 25.8, 128.9, 1002.4],
   },
 };
 
@@ -406,6 +422,7 @@ export function getPlinkoMultipliers(rows: number, risk: PlinkoRisk) {
 
 export function playPlinko(wager: number, rows: number, risk: PlinkoRisk): PlinkoResult {
   const normalizedRows = plinkoRowsOptions.includes(rows as (typeof plinkoRowsOptions)[number]) ? rows : 16;
+  const multipliers = getPlinkoMultipliers(normalizedRows, risk);
   const path: number[] = [];
   let slotIndex = 0;
 
@@ -415,7 +432,6 @@ export function playPlinko(wager: number, rows: number, risk: PlinkoRisk): Plink
     slotIndex += move;
   }
 
-  const multipliers = getPlinkoMultipliers(normalizedRows, risk);
   const multiplier = multipliers[slotIndex] ?? multipliers[Math.floor(multipliers.length / 2)];
   const payout = Math.max(0, Math.round(wager * multiplier));
 

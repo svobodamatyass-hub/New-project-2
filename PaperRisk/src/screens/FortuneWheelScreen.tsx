@@ -4,6 +4,7 @@ import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-nativ
 import Svg, { Circle, G, Path, Text as SvgText } from 'react-native-svg';
 
 import { ActionButton } from '../components/ActionButton';
+import { CasinoResultBanner } from '../components/CasinoResultBanner';
 import { Panel } from '../components/Panel';
 import { SectionHeader } from '../components/SectionHeader';
 import { StatTile } from '../components/StatTile';
@@ -205,6 +206,15 @@ export function FortuneWheelScreen() {
         <ActionButton disabled={!canSpin} Icon={CircleDotDashed} onPress={handleSpin} size="large" tone="casino">
           {isSpinning ? 'Spinning...' : 'Spin'}
         </ActionButton>
+
+        {lastResult ? (
+          <CasinoResultBanner
+            caption="Last spin"
+            title={lastResult.label}
+            tone={lastResult.payout > 0 ? 'positive' : 'default'}
+            value={formatMoney(lastResult.payout)}
+          />
+        ) : null}
       </Panel>
 
       <Panel>

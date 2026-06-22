@@ -22,13 +22,19 @@ export type SaveStatus = 'loading' | 'saved' | 'saving' | 'error';
 type GameContextValue = {
   state: GameState;
   saveStatus: SaveStatus;
-  setMarketSpeed: (speed: GameState['settings']['marketSpeed']) => void;
-  setMarketVolatility: (volatility: GameState['settings']['marketVolatility']) => void;
   setEconomyDifficulty: (difficulty: GameState['settings']['economyDifficulty']) => void;
+  setMasterMute: (enabled: boolean) => void;
+  setHapticsIntensity: (intensity: number) => void;
+  setBlackjackVolume: (volume: number) => void;
+  setRouletteVolume: (volume: number) => void;
+  setAdminSlotsWinChanceOffset: (offset: number) => void;
+  setAdminSlotsPayoutMultiplier: (multiplier: number) => void;
+  setAdminPlinkoPayoutMultiplier: (multiplier: number) => void;
+  simulateSlots: (count: number) => void;
+  setAdminPreset: (preset: 'safe' | 'boost' | 'chaos' | 'default') => void;
   borrow: (amount: number) => void;
   repay: (amount: number) => void;
   applyInterest: () => void;
-  tickMarket: () => void;
   buyTokens: (packId: string) => void;
   spinSlots: (result?: SlotsResult) => void;
   spinFortuneWheel: (sectionCount: number, result?: FortuneWheelResult) => void;
@@ -38,8 +44,6 @@ type GameContextValue = {
   playBlackjack: (wager: number) => void;
   settleBlackjack: (result: BlackjackResult) => void;
   playRoulette: (bet: RouletteBet, wager: number, result?: RouletteResult) => void;
-  buyAsset: (assetId: string, shares: number) => void;
-  sellAsset: (assetId: string, shares: number) => void;
   resetGame: () => Promise<void>;
 };
 
@@ -49,7 +53,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(gameReducer, undefined, createInitialGameState);
   const [hasHydrated, setHasHydrated] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('loading');
-  const marketTickIntervalMs = state.settings.marketSpeed === 'fast' ? 7000 : state.settings.marketSpeed === 'slow' ? 25000 : 15000;
 
   useEffect(() => {
     let isMounted = true;
@@ -110,33 +113,25 @@ export function GameProvider({ children }: { children: ReactNode }) {
     };
   }, [hasHydrated, state]);
 
-  useEffect(() => {
-    if (!hasHydrated) {
-      return;
-    }
-
-    const intervalId = setInterval(() => {
-      dispatch({ type: 'tickMarket' });
-    }, marketTickIntervalMs);
-
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, [hasHydrated, marketTickIntervalMs]);
-
   const value = useMemo<GameContextValue>(
     () => ({
       state,
       saveStatus,
-      setMarketSpeed: (speed: GameState['settings']['marketSpeed']) => dispatch({ type: 'setMarketSpeed', speed }),
-      setMarketVolatility: (volatility: GameState['settings']['marketVolatility']) =>
-        dispatch({ type: 'setMarketVolatility', volatility }),
       setEconomyDifficulty: (difficulty: GameState['settings']['economyDifficulty']) =>
         dispatch({ type: 'setEconomyDifficulty', difficulty }),
+      setMasterMute: (enabled: boolean) => dispatch({ type: 'setMasterMute', enabled }),
+      setHapticsIntensity: (intensity: number) => dispatch({ type: 'setHapticsIntensity', intensity }),
+      setBlackjackVolume: (volume: number) => dispatch({ type: 'setBlackjackVolume', volume }),
+      setRouletteVolume: (volume: number) => dispatch({ type: 'setRouletteVolume', volume }),
+      setAdminSlotsWinChanceOffset: (offset: number) => dispatch({ type: 'setAdminSlotsWinChanceOffset', offset }),
+      setAdminSlotsPayoutMultiplier: (multiplier: number) => dispatch({ type: 'setAdminSlotsPayoutMultiplier', multiplier }),
+      setAdminPlinkoPayoutMultiplier: (multiplier: number) =>
+        dispatch({ type: 'setAdminPlinkoPayoutMultiplier', multiplier }),
+      simulateSlots: (count: number) => dispatch({ type: 'simulateSlots', count }),
+      setAdminPreset: (preset: 'safe' | 'boost' | 'chaos' | 'default') => dispatch({ type: 'setAdminPreset', preset }),
       borrow: (amount: number) => dispatch({ type: 'borrow', amount }),
       repay: (amount: number) => dispatch({ type: 'repay', amount }),
       applyInterest: () => dispatch({ type: 'applyInterest' }),
-      tickMarket: () => dispatch({ type: 'tickMarket' }),
       buyTokens: (packId: string) => dispatch({ type: 'buyTokens', packId }),
       spinSlots: (result?: SlotsResult) => dispatch({ type: 'spinSlots', result }),
       spinFortuneWheel: (sectionCount: number, result?: FortuneWheelResult) =>
@@ -151,8 +146,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
       settleBlackjack: (result: BlackjackResult) => dispatch({ type: 'settleBlackjack', result }),
       playRoulette: (bet: RouletteBet, wager: number, result?: RouletteResult) =>
         dispatch({ type: 'playRoulette', bet, wager, result }),
-      buyAsset: (assetId: string, shares: number) => dispatch({ type: 'buyAsset', assetId, shares }),
-      sellAsset: (assetId: string, shares: number) => dispatch({ type: 'sellAsset', assetId, shares }),
       resetGame: async () => {
         await clearGameState();
         dispatch({ type: 'reset' });

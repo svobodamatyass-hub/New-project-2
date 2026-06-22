@@ -1,12 +1,9 @@
-import { BanknoteArrowUp, CircleDollarSign, TrendingUp } from 'lucide-react-native';
+import { BanknoteArrowUp, CircleDollarSign } from 'lucide-react-native';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { ActionButton } from '../components/ActionButton';
-import { AssetListItem } from '../components/AssetListItem';
 import { BrandHeader } from '../components/BrandHeader';
 import { Panel } from '../components/Panel';
-import { PortfolioList } from '../components/PortfolioList';
-import { SectionHeader } from '../components/SectionHeader';
 import { Screen } from '../components/Screen';
 import { getSaveStatusLabel, getSaveStatusTone } from '../components/SaveStatusBadge';
 import { StatTile } from '../components/StatTile';
@@ -22,9 +19,10 @@ type HomeScreenProps = {
 
 export function HomeScreen({ onNavigate }: HomeScreenProps) {
   const { saveStatus, state } = useGame();
-  const { player } = state;
-  const dailyDelta = player.loan.principal > 0 ? '-0.8% debt pressure' : '+3.4% today';
+  const { casino, player } = state;
+  const statusLine = player.loan.principal > 0 ? 'Debt is active and interest keeps growing.' : 'No open debt. Cash is ready to use.';
   const profileLabel = getActiveProfileLabel(state.settings);
+  const casinoTone = player.casinoProfit > 0 ? 'positive' : player.casinoProfit < 0 ? 'warning' : 'default';
 
   return (
     <Screen>
@@ -39,39 +37,36 @@ export function HomeScreen({ onNavigate }: HomeScreenProps) {
         <Text adjustsFontSizeToFit numberOfLines={1} style={styles.netWorth}>
           {formatMoney(player.netWorth)}
         </Text>
-        <Text style={[styles.delta, player.loan.principal > 0 && styles.negativeDelta]}>{dailyDelta}</Text>
+        <Text style={[styles.delta, player.loan.principal > 0 && styles.negativeDelta]}>{statusLine}</Text>
       </View>
 
       <View style={styles.statsRow}>
         <StatTile label="Cash" value={formatMoney(player.cash)} />
-        <StatTile label="Invested" value={formatMoney(player.invested)} />
+        <StatTile
+          label="Debt"
+          tone={player.loan.principal > 0 ? 'warning' : 'positive'}
+          value={player.loan.principal > 0 ? formatMoney(player.loan.principal) : 'Clear'}
+        />
       </View>
 
       <Panel>
         <Text style={styles.panelTitle}>Quick actions</Text>
         <View style={styles.actions}>
-          <ActionButton Icon={TrendingUp} onPress={() => onNavigate('market')} tone="primary">
-            Invest
+          <ActionButton Icon={CircleDollarSign} onPress={() => onNavigate('casino')} size="large" tone="casino">
+            Play
           </ActionButton>
-          <ActionButton Icon={BanknoteArrowUp} onPress={() => onNavigate('wallet')}>
-            Borrow
-          </ActionButton>
-          <ActionButton Icon={CircleDollarSign} onPress={() => onNavigate('casino')} tone="casino">
-            Casino
+          <ActionButton Icon={BanknoteArrowUp} onPress={() => onNavigate('wallet')} size="large">
+            Bank
           </ActionButton>
         </View>
       </Panel>
 
-      <SectionHeader title="Watchlist" />
-      <View style={styles.list}>
-        {state.assets.slice(0, 3).map((asset) => (
-          <AssetListItem compact asset={asset} key={asset.id} />
-        ))}
-      </View>
-
       <Panel>
-        <Text style={styles.panelTitle}>Portfolio</Text>
-        <PortfolioList assets={state.assets} positions={player.positions} />
+        <Text style={styles.panelTitle}>Session</Text>
+        <View style={styles.statsRow}>
+          <StatTile label="Tokens" tone={casino.tokens > 0 ? 'warning' : 'default'} value={`${casino.tokens}`} />
+          <StatTile label="Casino P/L" tone={casinoTone} value={formatMoney(player.casinoProfit)} />
+        </View>
       </Panel>
     </Screen>
   );
@@ -80,30 +75,27 @@ export function HomeScreen({ onNavigate }: HomeScreenProps) {
 const styles = StyleSheet.create({
   hero: {
     gap: spacing.xs,
-  },
-  kicker: {
-    color: colors.textFaint,
-    fontSize: 13,
-    fontWeight: '700',
-    letterSpacing: 0,
+    paddingTop: spacing.xs,
   },
   label: {
     color: colors.textMuted,
     fontFamily: typography.family,
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '800',
+    textTransform: 'uppercase',
   },
   netWorth: {
     color: colors.text,
     fontFamily: typography.family,
-    fontSize: 42,
-    fontWeight: '800',
+    fontSize: 44,
+    fontWeight: '900',
   },
   delta: {
     color: colors.positive,
     fontFamily: typography.family,
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '700',
+    lineHeight: 18,
   },
   negativeDelta: {
     color: colors.negative,
@@ -120,9 +112,6 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  list: {
     gap: spacing.sm,
   },
 });

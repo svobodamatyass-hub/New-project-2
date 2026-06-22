@@ -4,12 +4,14 @@ import { Animated, Modal, Pressable, StyleSheet, Text, View } from 'react-native
 import Svg, { Circle, Path, Polygon } from 'react-native-svg';
 
 import { ActionButton } from '../components/ActionButton';
+import { CasinoResultBanner } from '../components/CasinoResultBanner';
 import { InfoRow } from '../components/InfoRow';
 import { Panel } from '../components/Panel';
 import { SectionHeader } from '../components/SectionHeader';
 import { StatTile } from '../components/StatTile';
 import { WagerInput } from '../components/WagerInput';
 import { getCasinoDifficultyConfig } from '../domain/casino';
+import { useCasinoFeedback } from '../feedback/useCasinoFeedback';
 import { formatMoney } from '../domain/finance';
 import { useGame } from '../game/GameProvider';
 import type { BlackjackCard, BlackjackResult } from '../types/domain';
@@ -255,6 +257,7 @@ export function BlackjackScreen() {
   const [showRules, setShowRules] = useState(false);
   const timeoutRefs = useRef<ReturnType<typeof setTimeout>[]>([]);
   const { settleBlackjack, state } = useGame();
+  const feedback = useCasinoFeedback();
   const { blackjackLastResult } = state.casino;
   const payoutMultiplier = getCasinoDifficultyConfig(state.settings.economyDifficulty).blackjackPayoutMultiplier;
   const activeHand = hand?.status === 'playing' ? hand : null;
@@ -287,6 +290,7 @@ export function BlackjackScreen() {
   );
 
   function commitResult(result: BlackjackResult) {
+    feedback.blackjackResult(result.outcome);
     settleBlackjack(result);
     setHand((current) => (current ? { ...current, status: 'settled', result } : current));
   }
@@ -323,10 +327,22 @@ export function BlackjackScreen() {
     setIsInitialDealing(true);
     timeoutRefs.current.forEach((timeout) => clearTimeout(timeout));
     timeoutRefs.current = [
-      setTimeout(() => setDealStep(1), 160),
-      setTimeout(() => setDealStep(2), 460),
-      setTimeout(() => setDealStep(3), 760),
-      setTimeout(() => setDealStep(4), 1060),
+      setTimeout(() => {
+        feedback.blackjackDeal();
+        setDealStep(1);
+      }, 160),
+      setTimeout(() => {
+        feedback.blackjackDeal();
+        setDealStep(2);
+      }, 460),
+      setTimeout(() => {
+        feedback.blackjackDeal();
+        setDealStep(3);
+      }, 760),
+      setTimeout(() => {
+        feedback.blackjackDeal();
+        setDealStep(4);
+      }, 1060),
       setTimeout(() => {
         setIsInitialDealing(false);
 
@@ -342,6 +358,7 @@ export function BlackjackScreen() {
       return;
     }
 
+    feedback.blackjackHit();
     const draw = drawCard(activeHand.deck);
     const nextPlayerCards = [...activeHand.playerCards, draw.card];
     const nextHand = {
@@ -445,6 +462,15 @@ export function BlackjackScreen() {
         ) : null}
 
         {shownResult ? (
+          <CasinoResultBanner
+            caption="Last hand"
+            title={shownResult.outcome}
+            tone={resultTone}
+            value={formatMoney(shownResult.payout - shownResult.wager)}
+          />
+        ) : null}
+
+        {shownResult ? (
           <>
             <InfoRow label="Outcome" value={shownResult.outcome} tone={resultTone} />
             <InfoRow label="Dealer total" value={`${shownResult.dealerTotal}`} />
@@ -483,7 +509,7 @@ export function BlackjackScreen() {
 
             <View style={styles.ruleList}>
               <Text style={styles.ruleText}>Get closer to 21 than the dealer.</Text>
-              <Text style={styles.ruleText}>The deck is shuffled once on Deal, then every Hit and dealer draw uses that same deck.</Text>
+              <Text style={styles.ruleText}>The deck is shuffled once on Deal, then every Hit and dealer draw uses that same deck with no hidden bias.</Text>
               <Text style={styles.ruleText}>Number cards count as shown. J, Q and K count as 10.</Text>
               <Text style={styles.ruleText}>Ace counts as 11, but becomes 1 if your hand would go over 21.</Text>
               <Text style={styles.ruleText}>Hit draws one card. Stand ends your turn.</Text>

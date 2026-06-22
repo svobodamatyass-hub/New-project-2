@@ -30,6 +30,8 @@ export function Screen({ children }: ScreenProps) {
   return (
     <Animated.ScrollView
       contentContainerStyle={styles.content}
+      contentInsetAdjustmentBehavior="automatic"
+      keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
       style={[styles.screen, { opacity, transform: [{ translateY }] }]}
     >
@@ -44,9 +46,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   content: {
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.xl,
-    paddingBottom: 40,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.xxl + spacing.xl,
     gap: spacing.lg,
   },
 });

@@ -3,6 +3,7 @@ import { TrendingUp } from 'lucide-react-native';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { ActionButton } from '../components/ActionButton';
+import { CasinoResultBanner } from '../components/CasinoResultBanner';
 import { InfoRow } from '../components/InfoRow';
 import { Panel } from '../components/Panel';
 import { SectionHeader } from '../components/SectionHeader';
@@ -15,9 +16,9 @@ import { colors, spacing, typography } from '../theme';
 const visibleLanes = 8;
 const chickenStopLane = 5;
 const maxCrashPlanSteps = 120;
-const crashHouseEdge = 0.985;
-const instantCrashChance = 0.015;
-const crashGrowthRate = 1.045;
+const crashHouseEdge = 0.98;
+const crashMinMultiplier = 1.09;
+const crashGrowthRate = 1.04;
 
 function getStepMultiplier(step: number) {
   return Number(Math.pow(crashGrowthRate, step).toFixed(2));
@@ -34,15 +35,8 @@ function getSafeStepsForCrashMultiplier(crashMultiplier: number) {
 }
 
 function createCrashPlan() {
-  if (Math.random() < instantCrashChance) {
-    return {
-      safeSteps: 0,
-      crashMultiplier: 1,
-    };
-  }
-
   const roll = Math.random();
-  const crashMultiplier = Number(Math.max(1.01, crashHouseEdge / (1 - roll)).toFixed(2));
+  const crashMultiplier = Number(Math.max(crashMinMultiplier, crashHouseEdge / (1 - roll)).toFixed(2));
 
   return {
     safeSteps: getSafeStepsForCrashMultiplier(crashMultiplier),
@@ -156,6 +150,15 @@ export function CrashScreen() {
             Cash out
           </ActionButton>
         </View>
+
+        {lastResult ? (
+          <CasinoResultBanner
+            caption="Last round"
+            title={lastResult.outcome === 'cashout' ? 'Cashed out' : 'Crashed'}
+            tone={lastResult.outcome === 'cashout' ? 'positive' : 'negative'}
+            value={formatMoney(lastResult.payout - lastResult.wager)}
+          />
+        ) : null}
       </Panel>
 
       {lastResult ? (

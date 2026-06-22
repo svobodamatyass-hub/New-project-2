@@ -29,7 +29,7 @@ export function BrandHeader({ screen, status = 'Paper', statusTone = 'positive' 
 
 const styles = StyleSheet.create({
   header: {
-    minHeight: 42,
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -38,19 +38,20 @@ const styles = StyleSheet.create({
   brand: {
     color: colors.textFaint,
     fontFamily: typography.family,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '800',
+    textTransform: 'uppercase',
   },
   screen: {
     color: colors.text,
     fontFamily: typography.family,
-    fontSize: 17,
-    fontWeight: '800',
-    marginTop: 2,
+    fontSize: 20,
+    fontWeight: '900',
+    marginTop: 1,
   },
   status: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
+    gap: spacing.sm,
   },
 });

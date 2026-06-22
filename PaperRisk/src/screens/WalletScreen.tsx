@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { BanknoteArrowDown, BanknoteArrowUp, TimerReset } from 'lucide-react-native';
+import { BanknoteArrowDown, BanknoteArrowUp } from 'lucide-react-native';
 
 import { ActionButton } from '../components/ActionButton';
 import { AmountSelector } from '../components/AmountSelector';
@@ -10,7 +10,6 @@ import { DebtMeter } from '../components/DebtMeter';
 import { InfoRow } from '../components/InfoRow';
 import { LoanPressurePanel } from '../components/LoanPressurePanel';
 import { Panel } from '../components/Panel';
-import { PortfolioList } from '../components/PortfolioList';
 import { SaveStatusBadge } from '../components/SaveStatusBadge';
 import { Screen } from '../components/Screen';
 import { SectionHeader } from '../components/SectionHeader';
@@ -19,10 +18,8 @@ import { TransactionList } from '../components/TransactionList';
 import {
   calculateDebtRisk,
   calculateInterestCharge,
-  formatLoanDueLabel,
   formatMoney,
   formatPercent,
-  getCreditLimit,
   getLoanPressureLabel,
   getRemainingCredit,
 } from '../domain/finance';
@@ -32,9 +29,8 @@ import { useGame } from '../game/GameProvider';
 import { colors, spacing, typography } from '../theme';
 
 export function WalletScreen() {
-  const { applyInterest, borrow, repay, resetGame, saveStatus, state } = useGame();
+  const { borrow, repay, saveStatus, state } = useGame();
   const [selectedAmount, setSelectedAmount] = useState(2500);
-  const [isResetArmed, setIsResetArmed] = useState(false);
   const { player, transactions } = state;
   const debtRisk = calculateDebtRisk(player.loan.principal, player.netWorth);
   const baseInterestCharge = calculateInterestCharge(player.loan.principal, player.loan.interestRate);
@@ -50,21 +46,9 @@ export function WalletScreen() {
   const canRepay = player.loan.principal > 0 && player.cash > 0;
   const repayAmount = Math.min(selectedAmount, player.cash, player.loan.principal);
   const loanPressure = player.loan.principal > 0 ? getLoanPressureLabel(player.loan.principal, player.netWorth) : 'Clear';
-  const loanDueLabel = formatLoanDueLabel(player.loan.principal, player.loan.nextIncreaseAt);
-  const creditLimit = getCreditLimit(player.netWorth);
   const remainingCredit = getRemainingCredit(player.loan.principal, player.netWorth);
   const canBorrow = remainingCredit > 0;
   const profileLabel = getActiveProfileLabel(state.settings);
-
-  function handleResetPress() {
-    if (!isResetArmed) {
-      setIsResetArmed(true);
-      return;
-    }
-
-    setIsResetArmed(false);
-    resetGame();
-  }
 
   return (
     <Screen>
@@ -77,33 +61,33 @@ export function WalletScreen() {
 
       <View style={styles.statsRow}>
         <StatTile label="Cash" value={formatMoney(player.cash)} />
+        <StatTile
+          label="Debt"
+          value={player.loan.principal > 0 ? formatMoney(player.loan.principal) : 'Clear'}
+          tone={player.loan.principal > 0 ? 'warning' : 'positive'}
+        />
         <StatTile label="Debt risk" value={debtRisk} tone={debtRisk === 'Clear' ? 'positive' : 'warning'} />
       </View>
 
       <Panel>
-        <Text style={styles.label}>Credit line</Text>
+        <Text style={styles.label}>Open debt</Text>
         <Text adjustsFontSizeToFit numberOfLines={1} style={styles.debt}>
           {formatMoney(player.loan.principal)}
         </Text>
         <View style={styles.divider} />
-        <InfoRow label="Base interest" value={formatPercent(player.loan.interestRate * 100)} />
-        <InfoRow label="Credit limit" value={formatMoney(creditLimit)} />
-        <InfoRow label="Remaining credit" value={formatMoney(remainingCredit)} tone={remainingCredit > 0 ? 'positive' : 'warning'} />
+        <InfoRow label="Rate" value={formatPercent(player.loan.interestRate * 100)} />
+        <InfoRow label="Available" value={formatMoney(remainingCredit)} tone={remainingCredit > 0 ? 'positive' : 'warning'} />
         <InfoRow
           label="Pressure"
           value={loanPressure}
           tone={player.loan.principal > 0 ? 'warning' : 'positive'}
         />
         <InfoRow
-          label="Next interest"
-          value={loanDueLabel}
-          tone={player.loan.principal > 0 ? 'warning' : 'positive'}
-        />
-        <InfoRow
-          label="Projected charge"
+          label="Next charge"
           value={formatMoney(projectedInterestCharge)}
           tone={projectedInterestCharge > 0 ? 'warning' : 'positive'}
         />
+        <Text style={styles.helper}>Interest is applied automatically while debt is open.</Text>
         <LoanPressurePanel
           interestCharge={projectedInterestCharge}
           netWorth={player.netWorth}
@@ -121,9 +105,6 @@ export function WalletScreen() {
             Repay
           </ActionButton>
         </View>
-        <ActionButton disabled={player.loan.principal <= 0} Icon={TimerReset} onPress={applyInterest} tone="casino">
-          Advance interest
-        </ActionButton>
       </Panel>
 
       <Panel>
@@ -134,19 +115,8 @@ export function WalletScreen() {
               <SaveStatusBadge status={saveStatus} />
             </View>
           </View>
-          <View style={styles.resetButton}>
-            <ActionButton onPress={handleResetPress} tone={isResetArmed ? 'danger' : 'neutral'}>
-              {isResetArmed ? 'Confirm' : 'Reset'}
-            </ActionButton>
-          </View>
         </View>
-        {isResetArmed ? <Text style={styles.resetHint}>Confirm reset</Text> : null}
         <TransactionList transactions={transactions.slice(0, 6)} />
-      </Panel>
-
-      <Panel>
-        <Text style={styles.label}>Portfolio</Text>
-        <PortfolioList assets={state.assets} positions={player.positions} />
       </Panel>
     </Screen>
   );
@@ -173,6 +143,13 @@ const styles = StyleSheet.create({
     height: StyleSheet.hairlineWidth,
     backgroundColor: colors.border,
   },
+  helper: {
+    color: colors.textFaint,
+    fontFamily: typography.family,
+    fontSize: 12,
+    fontWeight: '700',
+    lineHeight: 16,
+  },
   actions: {
     flexDirection: 'row',
     gap: spacing.sm,
@@ -183,17 +160,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: spacing.md,
   },
-  resetButton: {
-    width: 104,
-  },
   saveBadge: {
     marginTop: spacing.xs,
-  },
-  resetHint: {
-    color: colors.negative,
-    fontFamily: typography.family,
-    fontSize: 12,
-    fontWeight: '700',
-    lineHeight: 16,
   },
 });

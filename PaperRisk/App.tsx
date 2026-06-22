@@ -8,7 +8,6 @@ import { GameProvider } from './src/game/GameProvider';
 import { tabs, type TabKey } from './src/navigation/tabs';
 import { CasinoScreen } from './src/screens/CasinoScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
-import { MarketScreen } from './src/screens/MarketScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { WalletScreen } from './src/screens/WalletScreen';
 import { colors } from './src/theme/colors';
@@ -24,8 +23,6 @@ export default function App() {
 
   const screen = useMemo(() => {
     switch (activeTab) {
-      case 'market':
-        return <MarketScreen />;
       case 'casino':
         return <CasinoScreen />;
       case 'wallet':
@@ -64,6 +61,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
     alignItems: 'center',
+    paddingTop: Platform.OS === 'web' ? 0 : 0,
   },
   deviceFrame: {
     flex: 1,

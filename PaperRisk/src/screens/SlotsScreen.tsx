@@ -3,6 +3,7 @@ import { Gem } from 'lucide-react-native';
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 
 import { ActionButton } from '../components/ActionButton';
+import { CasinoResultBanner } from '../components/CasinoResultBanner';
 import { Panel } from '../components/Panel';
 import { SectionHeader } from '../components/SectionHeader';
 import { StatTile } from '../components/StatTile';
@@ -155,6 +156,13 @@ export function SlotsScreen() {
             <SlotReel finalSymbol={symbol} index={index} key={index} spinning={spinningReels[index]} />
           ))}
         </View>
+
+        <CasinoResultBanner
+          caption="Last spin"
+          title={casino.slotsLastResult.payout > 0 ? casino.slotsLastResult.symbols.join(' ') : 'No hit'}
+          tone={casino.slotsLastResult.payout > 0 ? 'positive' : 'default'}
+          value={formatMoney(casino.slotsLastResult.payout)}
+        />
 
         <View style={styles.spinButtonWrap}>
           <ActionButton disabled={!canSpin} Icon={Gem} onPress={handleSpin} size="large" tone="casino">

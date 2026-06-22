@@ -54,15 +54,15 @@ export function ActionButton({
 const styles = StyleSheet.create({
   button: {
     flex: 1,
-    minHeight: 48,
+    minHeight: 52,
     borderRadius: 8,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.lg,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: StyleSheet.hairlineWidth,
   },
   largeButton: {
-    minHeight: 68,
+    minHeight: 72,
   },
   inner: {
     flexDirection: 'row',
@@ -96,11 +96,11 @@ const styles = StyleSheet.create({
   label: {
     color: colors.text,
     fontFamily: typography.family,
-    fontSize: 14,
-    fontWeight: '800',
+    fontSize: 15,
+    fontWeight: '900',
   },
   largeLabel: {
-    fontSize: 17,
+    fontSize: 18,
   },
   primaryLabel: {
     color: colors.background,

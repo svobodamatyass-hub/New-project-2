@@ -3,6 +3,7 @@ import { Bomb, Gem, Plus, RotateCcw, WalletCards } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ActionButton } from '../components/ActionButton';
+import { CasinoResultBanner } from '../components/CasinoResultBanner';
 import { InfoRow } from '../components/InfoRow';
 import { Panel } from '../components/Panel';
 import { SectionHeader } from '../components/SectionHeader';
@@ -22,7 +23,6 @@ import { useGame } from '../game/GameProvider';
 import { colors, spacing, typography, webFocusReset } from '../theme';
 
 const minePresets = [3, 5, 10, 15, 20];
-const tileWidth = '18%' as const;
 const autoNextOptions = [
   { id: 'off', label: 'Off' },
   { id: 'instant', label: 'Now' },
@@ -53,6 +53,7 @@ export function MinesScreen() {
   const [autoNextMode, setAutoNextMode] = useState<AutoNextMode>('off');
   const [autoPickTarget, setAutoPickTarget] = useState<(typeof autoPickOptions)[number]>(0);
   const [autoPickDelayMs, setAutoPickDelayMs] = useState<(typeof autoPickDelayOptions)[number]['id']>(550);
+  const [gridWidth, setGridWidth] = useState(0);
   const autoNextTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const autoPlayTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -62,6 +63,14 @@ export function MinesScreen() {
   const currentMultiplier = useMemo(() => getMinesMultiplier(mineCount, safePicks), [mineCount, safePicks]);
   const nextMultiplier = useMemo(() => getMinesMultiplier(mineCount, safePicks + 1), [mineCount, safePicks]);
   const maxSafePicks = minesTileCount - mineCount;
+  const tileSize = useMemo(() => {
+    if (gridWidth <= 0) {
+      return 0;
+    }
+
+    const totalGap = spacing.sm * (minesColumns - 1);
+    return (gridWidth - totalGap) / minesColumns;
+  }, [gridWidth]);
   const projectedPayout = Math.round(wager * currentMultiplier);
   const lastResult = state.casino.minesLastResult;
 
@@ -250,7 +259,15 @@ export function MinesScreen() {
             </View>
           </View>
 
-          <View style={styles.grid}>
+          <View
+            onLayout={(event) => {
+              const width = event.nativeEvent.layout.width;
+              if (Math.abs(width - gridWidth) > 0.5) {
+                setGridWidth(width);
+              }
+            }}
+            style={styles.grid}
+          >
             {Array.from({ length: minesTileCount }, (_, index) => {
               const isRevealed = revealedIndexes.includes(index);
               const isMine = mineIndexes.includes(index);
@@ -265,6 +282,7 @@ export function MinesScreen() {
                   onPress={() => revealTile(index)}
                   style={({ pressed }) => [
                     styles.tile,
+                    tileSize > 0 && { width: tileSize, height: tileSize },
                     isRevealed && (isMine ? styles.tileMine : styles.tileSafe),
                     isExploded && styles.tileExploded,
                     pressed && !isRevealed && isActive && styles.tilePressed,
@@ -440,6 +458,15 @@ export function MinesScreen() {
           </View>
         </View>
 
+        {lastResult ? (
+          <CasinoResultBanner
+            caption="Last round"
+            title={lastResult.outcome === 'cashout' ? 'Cashed out' : 'Mine hit'}
+            tone={lastResult.outcome === 'cashout' ? 'positive' : 'negative'}
+            value={formatMoney(lastResult.payout - lastResult.wager)}
+          />
+        ) : null}
+
       </Panel>
 
       {lastResult ? (
@@ -527,8 +554,6 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   tile: {
-    width: tileWidth,
-    aspectRatio: 1,
     borderRadius: 8,
     borderColor: colors.border,
     borderWidth: StyleSheet.hairlineWidth,

@@ -36,6 +36,24 @@ If the download is not ready yet:
 
 You can still build locally with EAS if you want, but GitHub Actions is the easiest download path from git.
 
+### Update the `android-latest` release asset after a new build
+
+When you have a fresh APK and want the direct download link below to always serve the newest build, run:
+
+```bash
+./scripts/publish-android-latest.sh <path-to-apk>
+```
+
+Example:
+
+```bash
+./scripts/publish-android-latest.sh PaperRisk-release.apk
+```
+
+This replaces `PaperRisk-latest.apk` on release tag `android-latest` (uses `gh release upload --clobber`), so this URL always points to the latest file:
+
+- https://github.com/svobodamatyass-hub/New-project-2/releases/download/android-latest/PaperRisk-latest.apk
+
 ## Product Direction
 
 - Matte black minimalist UI

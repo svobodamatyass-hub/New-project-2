@@ -22,29 +22,31 @@ export function AppShell({ activeTab, tabs, children, onTabPress }: AppShellProp
   return (
     <View style={styles.shell}>
       <View style={styles.content}>{children}</View>
-      <View style={styles.tabBar}>
-        {tabs.map(({ key, label, Icon }) => {
-          const isActive = activeTab === key;
-          const tone = isActive ? colors.text : colors.textFaint;
+      <View style={styles.tabBarWrap}>
+        <View style={styles.tabBar}>
+          {tabs.map(({ key, label, Icon }) => {
+            const isActive = activeTab === key;
+            const tone = isActive ? colors.text : colors.textFaint;
 
-          return (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ selected: isActive }}
-              key={key}
-              onPress={() => onTabPress(key)}
-              style={({ pressed }) => [
-                styles.tabItem,
-                webFocusReset,
-                isActive && styles.tabItemActive,
-                pressed && styles.tabPressed,
-              ]}
-            >
-              <Icon size={22} color={tone} strokeWidth={isActive ? 2.4 : 2} />
-              <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>{label}</Text>
-            </Pressable>
-          );
-        })}
+            return (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ selected: isActive }}
+                key={key}
+                onPress={() => onTabPress(key)}
+                style={({ pressed }) => [
+                  styles.tabItem,
+                  webFocusReset,
+                  isActive && styles.tabItemActive,
+                  pressed && styles.tabPressed,
+                ]}
+              >
+                <Icon size={22} color={tone} strokeWidth={isActive ? 2.4 : 2} />
+                {isActive ? <Text style={[styles.tabLabel, styles.tabLabelActive]}>{label}</Text> : null}
+              </Pressable>
+            );
+          })}
+        </View>
       </View>
     </View>
   );
@@ -58,23 +60,30 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
-  tabBar: {
-    minHeight: 82,
-    borderTopColor: colors.border,
-    borderTopWidth: StyleSheet.hairlineWidth,
+  tabBarWrap: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.md,
     backgroundColor: colors.background,
+  },
+  tabBar: {
+    minHeight: 72,
+    borderColor: colors.border,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 18,
+    backgroundColor: colors.surfaceRaised,
     flexDirection: 'row',
     paddingHorizontal: spacing.sm,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.sm,
+    paddingVertical: spacing.sm,
+    gap: spacing.xs,
   },
   tabItem: {
     flex: 1,
-    minHeight: 58,
+    minHeight: 52,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing.xs,
-    borderRadius: 8,
+    gap: 6,
+    borderRadius: 14,
   },
   tabItemActive: {
     backgroundColor: colors.surface,
@@ -84,10 +93,10 @@ const styles = StyleSheet.create({
     opacity: 0.82,
   },
   tabLabel: {
-    color: colors.textFaint,
+    color: colors.text,
     fontFamily: typography.family,
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '800',
   },
   tabLabelActive: {
     color: colors.text,

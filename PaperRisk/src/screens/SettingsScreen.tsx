@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { RefreshCcw } from 'lucide-react-native';
+import { useMemo, useState } from 'react';
+import { Minus, Plus, RefreshCcw } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Slider from '@react-native-community/slider';
 
 import { ActionButton } from '../components/ActionButton';
 import { InfoRow } from '../components/InfoRow';
@@ -11,16 +12,6 @@ import { SectionHeader } from '../components/SectionHeader';
 import { useGame } from '../game/GameProvider';
 import { colors, spacing, typography, webFocusReset } from '../theme';
 
-const marketSpeedOptions: Array<{ key: 'slow' | 'normal' | 'fast'; label: string; caption: string }> = [
-  { key: 'slow', label: 'Slow', caption: '25s' },
-  { key: 'normal', label: 'Normal', caption: '15s' },
-  { key: 'fast', label: 'Fast', caption: '7s' },
-];
-const marketVolatilityOptions: Array<{ key: 'low' | 'normal' | 'high'; label: string; caption: string }> = [
-  { key: 'low', label: 'Low', caption: 'Calmer moves' },
-  { key: 'normal', label: 'Normal', caption: 'Balanced' },
-  { key: 'high', label: 'High', caption: 'Bigger swings' },
-];
 const economyDifficultyOptions: Array<{ key: 'easy' | 'normal' | 'hard'; label: string; caption: string }> = [
   { key: 'easy', label: 'Easy', caption: 'Lighter debt' },
   { key: 'normal', label: 'Normal', caption: 'Standard' },
@@ -30,37 +21,19 @@ const profileOptions = [
   {
     id: 'chill',
     label: 'Chill',
-    speed: 'slow' as const,
-    volatility: 'low' as const,
     difficulty: 'easy' as const,
   },
   {
     id: 'balanced',
     label: 'Balanced',
-    speed: 'normal' as const,
-    volatility: 'normal' as const,
     difficulty: 'normal' as const,
   },
   {
     id: 'chaos',
     label: 'Chaos',
-    speed: 'fast' as const,
-    volatility: 'high' as const,
     difficulty: 'hard' as const,
   },
 ] as const;
-
-function getVolatilityMultiplier(level: 'low' | 'normal' | 'high') {
-  switch (level) {
-    case 'low':
-      return 0.7;
-    case 'high':
-      return 1.4;
-    case 'normal':
-    default:
-      return 1;
-  }
-}
 
 function getDifficultyInterestMultiplier(level: 'easy' | 'normal' | 'hard') {
   switch (level) {
@@ -74,17 +47,171 @@ function getDifficultyInterestMultiplier(level: 'easy' | 'normal' | 'hard') {
   }
 }
 
+function TuningRow({
+  label,
+  value,
+  min,
+  max,
+  step,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  onChange: (value: number) => void;
+}) {
+  const canDecrease = value > min;
+  const canIncrease = value < max;
+
+  return (
+    <View style={styles.tuningRow}>
+      <Text style={styles.tuningLabel}>{label}</Text>
+      <View style={styles.tuningControls}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ disabled: !canDecrease }}
+          disabled={!canDecrease}
+          onPress={() => onChange(Math.max(min, Number((value - step).toFixed(2))))}
+          style={({ pressed }) => [styles.tuningButton, webFocusReset, !canDecrease && styles.disabled, pressed && styles.segmentPressed]}
+        >
+          <Minus color={colors.text} size={14} />
+        </Pressable>
+        <Text style={styles.tuningValue}>{value.toFixed(2)}</Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ disabled: !canIncrease }}
+          disabled={!canIncrease}
+          onPress={() => onChange(Math.min(max, Number((value + step).toFixed(2))))}
+          style={({ pressed }) => [styles.tuningButton, webFocusReset, !canIncrease && styles.disabled, pressed && styles.segmentPressed]}
+        >
+          <Plus color={colors.text} size={14} />
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+function ToggleRow({
+  label,
+  caption,
+  value,
+  onChange,
+}: {
+  label: string;
+  caption?: string;
+  value: boolean;
+  onChange: (value: boolean) => void;
+}) {
+  return (
+    <View style={styles.sectionBlock}>
+      <View style={styles.toggleHeader}>
+        <Text style={styles.controlLabel}>{label}</Text>
+        <Text style={styles.toggleValue}>{value ? 'On' : 'Off'}</Text>
+      </View>
+      {caption ? <Text style={styles.toggleCaption}>{caption}</Text> : null}
+      <View style={styles.segmentRow}>
+        {[true, false].map((option) => {
+          const selected = value === option;
+
+          return (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ selected }}
+              key={option ? 'on' : 'off'}
+              onPress={() => onChange(option)}
+              style={({ pressed }) => [
+                styles.segment,
+                webFocusReset,
+                selected && styles.segmentSelected,
+                pressed && styles.segmentPressed,
+              ]}
+            >
+              <Text style={[styles.segmentLabel, selected && styles.segmentLabelSelected]}>{option ? 'On' : 'Off'}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+function VolumeSliderRow({
+  label,
+  caption,
+  value,
+  onChange,
+}: {
+  label: string;
+  caption?: string;
+  value: number;
+  onChange: (value: number) => void;
+}) {
+  const percent = Math.round(value * 100);
+
+  return (
+    <View style={styles.sectionBlock}>
+      <View style={styles.toggleHeader}>
+        <Text style={styles.controlLabel}>{label}</Text>
+        <Text style={styles.toggleValue}>{percent}%</Text>
+      </View>
+      {caption ? <Text style={styles.toggleCaption}>{caption}</Text> : null}
+      <View style={styles.sliderCard}>
+        <Slider
+          maximumTrackTintColor={colors.border}
+          maximumValue={1}
+          minimumTrackTintColor={colors.warning}
+          minimumValue={0}
+          onSlidingComplete={(nextValue) => onChange(Number(nextValue.toFixed(2)))}
+          onValueChange={onChange}
+          step={0.05}
+          style={styles.slider}
+          thumbTintColor={colors.text}
+          value={value}
+        />
+        <View style={styles.sliderScale}>
+          <Text style={styles.sliderScaleText}>0%</Text>
+          <Text style={styles.sliderScaleText}>100%</Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
 export function SettingsScreen() {
   const [isResetArmed, setIsResetArmed] = useState(false);
-  const { resetGame, saveStatus, setEconomyDifficulty, setMarketSpeed, setMarketVolatility, state } = useGame();
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const {
+    resetGame,
+    saveStatus,
+    setEconomyDifficulty,
+    setMasterMute,
+    setHapticsIntensity,
+    setBlackjackVolume,
+    setRouletteVolume,
+    setAdminSlotsPayoutMultiplier,
+    setAdminSlotsWinChanceOffset,
+    setAdminPlinkoPayoutMultiplier,
+    simulateSlots,
+    setAdminPreset,
+    state,
+  } = useGame();
   const totalTransactions = state.transactions.length;
-  const activeProfileId =
-    profileOptions.find(
-      (profile) =>
-        profile.speed === state.settings.marketSpeed &&
-        profile.volatility === state.settings.marketVolatility &&
-        profile.difficulty === state.settings.economyDifficulty,
-    )?.id ?? null;
+  const activeProfileId = profileOptions.find((profile) => profile.difficulty === state.settings.economyDifficulty)?.id ?? null;
+  const feedbackSummary = useMemo(() => {
+    if (state.settings.feedback.masterMute) {
+      return 'Master mute';
+    }
+
+    const activeItems = [
+      state.settings.feedback.hapticsIntensity > 0 ? `Haptics ${Math.round(state.settings.feedback.hapticsIntensity * 100)}%` : null,
+      state.settings.feedback.blackjackVolume > 0 ? `Blackjack ${Math.round(state.settings.feedback.blackjackVolume * 100)}%` : null,
+      state.settings.feedback.rouletteVolume > 0 ? `Roulette ${Math.round(state.settings.feedback.rouletteVolume * 100)}%` : null,
+    ].filter(Boolean);
+
+    return activeItems.length > 0 ? activeItems.join(' | ') : 'Silent';
+  }, [state.settings.feedback]);
 
   async function handleResetPress() {
     if (!isResetArmed) {
@@ -97,8 +224,6 @@ export function SettingsScreen() {
   }
 
   function applyProfile(profile: (typeof profileOptions)[number]) {
-    setMarketSpeed(profile.speed);
-    setMarketVolatility(profile.volatility);
     setEconomyDifficulty(profile.difficulty);
   }
 
@@ -107,16 +232,10 @@ export function SettingsScreen() {
       <SectionHeader title="Settings" />
 
       <Panel>
-        <Text style={styles.panelTitle}>Storage</Text>
-        <InfoRow label="Save status" value={getSaveStatusLabel(saveStatus)} />
-        <InfoRow label="State version" value={`${state.version}`} />
-        <InfoRow label="Activity rows" value={`${totalTransactions}`} />
-      </Panel>
-
-      <Panel>
-        <Text style={styles.panelTitle}>Simulation</Text>
-        <Text style={styles.controlLabel}>Preset</Text>
-        <View style={styles.segmentRow}>
+        <Text style={styles.panelTitle}>Profile</Text>
+        <View style={styles.sectionBlock}>
+          <Text style={styles.controlLabel}>Style</Text>
+          <View style={styles.segmentRow}>
           {profileOptions.map((profile) => {
             const selected = activeProfileId === profile.id;
             return (
@@ -133,61 +252,15 @@ export function SettingsScreen() {
                 ]}
               >
                 <Text style={[styles.segmentLabel, selected && styles.segmentLabelSelected]}>{profile.label}</Text>
-                <Text style={[styles.segmentCaption, selected && styles.segmentCaptionSelected]}>
-                  {profile.speed} | {profile.volatility} | {profile.difficulty}
-                </Text>
+                <Text style={[styles.segmentCaption, selected && styles.segmentCaptionSelected]}>{profile.difficulty}</Text>
               </Pressable>
             );
           })}
+          </View>
         </View>
-        <Text style={styles.controlLabel}>Market speed</Text>
-        <View style={styles.segmentRow}>
-          {marketSpeedOptions.map((item) => {
-            const selected = state.settings.marketSpeed === item.key;
-            return (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityState={{ selected }}
-                key={item.key}
-                onPress={() => setMarketSpeed(item.key)}
-                style={({ pressed }) => [
-                  styles.segment,
-                  webFocusReset,
-                  selected && styles.segmentSelected,
-                  pressed && styles.segmentPressed,
-                ]}
-              >
-                <Text style={[styles.segmentLabel, selected && styles.segmentLabelSelected]}>{item.label}</Text>
-                <Text style={[styles.segmentCaption, selected && styles.segmentCaptionSelected]}>{item.caption}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
-        <Text style={styles.controlLabel}>Market volatility</Text>
-        <View style={styles.segmentRow}>
-          {marketVolatilityOptions.map((item) => {
-            const selected = state.settings.marketVolatility === item.key;
-            return (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityState={{ selected }}
-                key={item.key}
-                onPress={() => setMarketVolatility(item.key)}
-                style={({ pressed }) => [
-                  styles.segment,
-                  webFocusReset,
-                  selected && styles.segmentSelected,
-                  pressed && styles.segmentPressed,
-                ]}
-              >
-                <Text style={[styles.segmentLabel, selected && styles.segmentLabelSelected]}>{item.label}</Text>
-                <Text style={[styles.segmentCaption, selected && styles.segmentCaptionSelected]}>{item.caption}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
-        <Text style={styles.controlLabel}>Economy difficulty</Text>
-        <View style={styles.segmentRow}>
+        <View style={styles.sectionBlock}>
+          <Text style={styles.controlLabel}>Debt pressure</Text>
+          <View style={styles.segmentRow}>
           {economyDifficultyOptions.map((item) => {
             const selected = state.settings.economyDifficulty === item.key;
             return (
@@ -208,12 +281,158 @@ export function SettingsScreen() {
               </Pressable>
             );
           })}
+          </View>
         </View>
-        <InfoRow label="Price swing power" value={`${getVolatilityMultiplier(state.settings.marketVolatility).toFixed(2)}x`} />
         <InfoRow
-          label="Debt interest pressure"
+          label="Interest multiplier"
           value={`${getDifficultyInterestMultiplier(state.settings.economyDifficulty).toFixed(2)}x`}
         />
+      </Panel>
+      <Panel>
+        <Text style={styles.panelTitle}>Sound & feedback</Text>
+        <InfoRow label="Active" value={feedbackSummary} />
+        <ToggleRow
+          label="Master mute"
+          caption="Mutes every game sound and vibration without erasing the switches below."
+          onChange={setMasterMute}
+          value={state.settings.feedback.masterMute}
+        />
+        <VolumeSliderRow
+          label="Haptics"
+          caption="Touch feedback intensity on supported phones."
+          onChange={setHapticsIntensity}
+          value={state.settings.feedback.hapticsIntensity}
+        />
+        <VolumeSliderRow
+          caption="Card deal, hit and hand result."
+          label="Blackjack sound"
+          onChange={setBlackjackVolume}
+          value={state.settings.feedback.blackjackVolume}
+        />
+        <VolumeSliderRow
+          caption="Only the landing result. No constant wheel noise."
+          label="Roulette sound"
+          onChange={setRouletteVolume}
+          value={state.settings.feedback.rouletteVolume}
+        />
+        <Text style={styles.feedbackHint}>Slots stay silent by design. Their feel is driven by motion only.</Text>
+      </Panel>
+      <Panel>
+        <View style={styles.advancedHeader}>
+          <View style={styles.advancedCopy}>
+            <Text style={styles.panelTitle}>Advanced</Text>
+            <Text style={styles.advancedHint}>Testing and tuning only.</Text>
+          </View>
+          <View style={styles.advancedButton}>
+            <ActionButton onPress={() => setShowAdvanced((value) => !value)} tone="neutral">
+              {showAdvanced ? 'Hide' : 'Show'}
+            </ActionButton>
+          </View>
+        </View>
+        {showAdvanced ? (
+          <>
+            <InfoRow label="Save status" value={getSaveStatusLabel(saveStatus)} />
+            <InfoRow label="State version" value={`${state.version}`} />
+            <InfoRow label="Activity rows" value={`${totalTransactions}`} />
+            <InfoRow label="Slot tokens" value={`${state.casino.tokens}`} />
+            <View style={styles.sectionBlock}>
+              <Text style={styles.controlLabel}>Live tuning</Text>
+              <View style={styles.segmentRow}>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => setAdminPreset('safe')}
+                style={({ pressed }) => [styles.segment, webFocusReset, pressed && styles.segmentPressed]}
+              >
+                <Text style={styles.segmentLabel}>Safe</Text>
+                <Text style={styles.segmentCaption}>Lower RTP</Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => setAdminPreset('boost')}
+                style={({ pressed }) => [styles.segment, webFocusReset, pressed && styles.segmentPressed]}
+              >
+                <Text style={styles.segmentLabel}>Boost</Text>
+                <Text style={styles.segmentCaption}>Higher wins</Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => setAdminPreset('chaos')}
+                style={({ pressed }) => [styles.segment, webFocusReset, pressed && styles.segmentPressed]}
+              >
+                <Text style={styles.segmentLabel}>Chaos</Text>
+                <Text style={styles.segmentCaption}>High variance</Text>
+              </Pressable>
+              </View>
+            </View>
+            <View style={styles.resetRow}>
+              <ActionButton Icon={RefreshCcw} onPress={() => setAdminPreset('default')} tone="neutral">
+                Reset tuning
+              </ActionButton>
+            </View>
+            <TuningRow
+              label="Slots extra win chance"
+              value={state.settings.adminTuning.slotsWinChanceOffset}
+              min={-0.2}
+              max={0.5}
+              step={0.02}
+              onChange={setAdminSlotsWinChanceOffset}
+            />
+            <TuningRow
+              label="Slots payout multiplier"
+              value={state.settings.adminTuning.slotsPayoutMultiplier}
+              min={0.1}
+              max={10}
+              step={0.1}
+              onChange={setAdminSlotsPayoutMultiplier}
+            />
+            <TuningRow
+              label="Plinko payout multiplier"
+              value={state.settings.adminTuning.plinkoPayoutMultiplier}
+              min={0.1}
+              max={10}
+              step={0.1}
+              onChange={setAdminPlinkoPayoutMultiplier}
+            />
+            <InfoRow
+              label="Slots chance boost"
+              value={`${state.settings.adminTuning.slotsWinChanceOffset >= 0 ? '+' : ''}${(
+                state.settings.adminTuning.slotsWinChanceOffset * 100
+              ).toFixed(0)}%`}
+            />
+            <View style={styles.sectionBlock}>
+              <Text style={styles.controlLabel}>Quick simulation</Text>
+              <View style={styles.segmentRow}>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => simulateSlots(10)}
+                style={({ pressed }) => [styles.segment, webFocusReset, pressed && styles.segmentPressed]}
+              >
+                <Text style={styles.segmentLabel}>+10 spins</Text>
+                <Text style={styles.segmentCaption}>Fast batch</Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => simulateSlots(100)}
+                style={({ pressed }) => [styles.segment, webFocusReset, pressed && styles.segmentPressed]}
+              >
+                <Text style={styles.segmentLabel}>+100 spins</Text>
+                <Text style={styles.segmentCaption}>Balance check</Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => simulateSlots(1000)}
+                style={({ pressed }) => [styles.segment, webFocusReset, pressed && styles.segmentPressed]}
+              >
+                <Text style={styles.segmentLabel}>+1000 spins</Text>
+                <Text style={styles.segmentCaption}>Stress test</Text>
+              </Pressable>
+              </View>
+            </View>
+          </>
+        ) : null}
+      </Panel>
+      <Panel>
+        <Text style={styles.panelTitle}>Reset</Text>
         <View style={styles.resetRow}>
           <ActionButton Icon={RefreshCcw} onPress={handleResetPress} tone={isResetArmed ? 'danger' : 'neutral'}>
             {isResetArmed ? 'Confirm reset' : 'Reset all progress'}
@@ -242,9 +461,82 @@ const styles = StyleSheet.create({
   segmentRow: {
     flexDirection: 'row',
     gap: spacing.xs,
+    flexWrap: 'wrap',
+  },
+  sectionBlock: {
+    gap: spacing.xs,
+    marginBottom: spacing.sm,
+  },
+  advancedHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+  },
+  advancedCopy: {
+    flex: 1,
+    gap: 2,
+  },
+  advancedButton: {
+    width: 92,
+  },
+  advancedHint: {
+    color: colors.textFaint,
+    fontFamily: typography.family,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  toggleHeader: {
+    minHeight: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  toggleValue: {
+    color: colors.textFaint,
+    fontFamily: typography.family,
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+  },
+  toggleCaption: {
+    color: colors.textFaint,
+    fontFamily: typography.family,
+    fontSize: 12,
+    fontWeight: '700',
+    lineHeight: 16,
+  },
+  sliderCard: {
+    width: '100%',
+    borderColor: colors.border,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 10,
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.sm,
+  },
+  slider: {
+    width: '100%',
+    height: 32,
+    marginHorizontal: 0,
+  },
+  sliderScale: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  sliderScaleText: {
+    color: colors.textFaint,
+    fontFamily: typography.family,
+    fontSize: 11,
+    fontWeight: '700',
   },
   segment: {
-    flex: 1,
+    minWidth: 94,
+    flexGrow: 1,
+    flexBasis: 0,
     minHeight: 56,
     borderRadius: 8,
     borderColor: colors.border,
@@ -289,5 +581,48 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     lineHeight: 16,
     paddingTop: spacing.xs,
+  },
+  tuningRow: {
+    gap: spacing.xs,
+    marginBottom: spacing.xs,
+  },
+  tuningLabel: {
+    color: colors.textMuted,
+    fontFamily: typography.family,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  tuningControls: {
+    minHeight: 42,
+    borderColor: colors.border,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 8,
+    backgroundColor: colors.background,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  tuningButton: {
+    width: 42,
+    height: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tuningValue: {
+    flex: 1,
+    textAlign: 'center',
+    color: colors.text,
+    fontFamily: typography.family,
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  feedbackHint: {
+    color: colors.textFaint,
+    fontFamily: typography.family,
+    fontSize: 12,
+    fontWeight: '700',
+    lineHeight: 16,
+  },
+  disabled: {
+    opacity: 0.4,
   },
 });

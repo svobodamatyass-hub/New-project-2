@@ -14,8 +14,6 @@ const iconsByType = {
   borrow: ArrowDownLeft,
   repay: ArrowUpRight,
   interest: ArrowUpRight,
-  buy: ArrowUpRight,
-  sell: ArrowDownLeft,
   casino: CircleDollarSign,
   system: Sparkles,
 } satisfies Record<TransactionType, typeof Sparkles>;

@@ -1,22 +1,21 @@
 import { createInitialGameState, initialCasino } from '../data/initialState';
 import {
-  getCasinoDifficultyConfig,
-  settleMinesRound,
   fortuneWheelTokenCost,
-  getSlotsWinChance,
-  playPlinko,
-  playBlackjack,
-  playRoulette,
+  getCasinoDifficultyConfig,
   getRouletteBetLabel,
+  getSlotsWinChance,
+  playBlackjack,
+  playPlinko,
+  playRoulette,
   settleCrash,
+  settleMinesRound,
   slotsSymbols,
   spinFortuneWheel,
   spinSlots,
   tokenPacks,
 } from '../domain/casino';
-import { calculateInterestCharge, getRemainingCredit } from '../domain/finance';
-import { normalizeAssetHistory, simulateAssetTickWithMultiplier } from '../domain/marketSimulation';
 import { getEconomyDifficultyFactors } from '../domain/economy';
+import { calculateInterestCharge, getRemainingCredit } from '../domain/finance';
 import type {
   BlackjackResult,
   CrashResult,
@@ -30,7 +29,7 @@ import type {
   SlotsResult,
   Transaction,
 } from '../types/domain';
-import { getAssetById, getPositionByAssetId, hydrateComputedPlayer } from './selectors';
+import { hydrateComputedPlayer } from './selectors';
 
 const INTEREST_INTERVAL_MS = 1000 * 60 * 60 * 2;
 const MAX_CATCH_UP_STEPS = 8;
@@ -40,7 +39,6 @@ export type GameAction =
   | { type: 'borrow'; amount: number }
   | { type: 'repay'; amount: number }
   | { type: 'applyInterest' }
-  | { type: 'tickMarket' }
   | { type: 'buyTokens'; packId: string }
   | { type: 'spinSlots'; result?: SlotsResult }
   | { type: 'spinFortuneWheel'; sectionCount: number; result?: FortuneWheelResult }
@@ -50,11 +48,16 @@ export type GameAction =
   | { type: 'playBlackjack'; wager: number }
   | { type: 'settleBlackjack'; result: BlackjackResult }
   | { type: 'playRoulette'; wager: number; bet: RouletteBet; result?: RouletteResult }
-  | { type: 'buyAsset'; assetId: string; shares: number }
-  | { type: 'sellAsset'; assetId: string; shares: number }
-  | { type: 'setMarketSpeed'; speed: GameState['settings']['marketSpeed'] }
-  | { type: 'setMarketVolatility'; volatility: GameState['settings']['marketVolatility'] }
   | { type: 'setEconomyDifficulty'; difficulty: GameState['settings']['economyDifficulty'] }
+  | { type: 'setMasterMute'; enabled: boolean }
+  | { type: 'setHapticsIntensity'; intensity: number }
+  | { type: 'setBlackjackVolume'; volume: number }
+  | { type: 'setRouletteVolume'; volume: number }
+  | { type: 'setAdminSlotsWinChanceOffset'; offset: number }
+  | { type: 'setAdminSlotsPayoutMultiplier'; multiplier: number }
+  | { type: 'setAdminPlinkoPayoutMultiplier'; multiplier: number }
+  | { type: 'simulateSlots'; count: number }
+  | { type: 'setAdminPreset'; preset: 'safe' | 'boost' | 'chaos' | 'default' }
   | { type: 'reset' };
 
 function createTransaction(input: Omit<Transaction, 'id' | 'createdAt'>): Transaction {
@@ -91,29 +94,66 @@ function normalizeSavedCasino(state: GameState) {
   };
 }
 
+function getLegacyVolume(
+  nextVolume: number | undefined,
+  legacyEnabled: boolean | undefined,
+  fallbackVolume: number,
+) {
+  if (typeof nextVolume === 'number') {
+    return Math.max(0, Math.min(1, nextVolume));
+  }
+
+  if (legacyEnabled === false) {
+    return 0;
+  }
+
+  return fallbackVolume;
+}
+
 function normalizeSavedState(state: GameState): GameState {
+  const legacyFeedback = state.settings?.feedback as
+    | {
+        blackjackSoundsEnabled?: boolean;
+        rouletteSoundsEnabled?: boolean;
+      }
+    | undefined;
+
   return {
     ...state,
     settings: {
-      marketSpeed: state.settings?.marketSpeed ?? 'normal',
-      marketVolatility: state.settings?.marketVolatility ?? 'normal',
       economyDifficulty: state.settings?.economyDifficulty ?? 'normal',
+      feedback: {
+        masterMute: state.settings?.feedback?.masterMute ?? false,
+        hapticsIntensity: Math.max(
+          0,
+          Math.min(
+            1,
+            state.settings?.feedback?.hapticsIntensity ??
+              ((state.settings?.feedback as { hapticsEnabled?: boolean } | undefined)?.hapticsEnabled === false ? 0 : 0.75),
+          ),
+        ),
+        blackjackVolume: getLegacyVolume(state.settings?.feedback?.blackjackVolume, legacyFeedback?.blackjackSoundsEnabled, 0.8),
+        rouletteVolume: getLegacyVolume(state.settings?.feedback?.rouletteVolume, legacyFeedback?.rouletteSoundsEnabled, 0.8),
+      },
+      adminTuning: {
+        slotsWinChanceOffset: state.settings?.adminTuning?.slotsWinChanceOffset ?? 0,
+        slotsPayoutMultiplier: state.settings?.adminTuning?.slotsPayoutMultiplier ?? 1,
+        plinkoPayoutMultiplier: state.settings?.adminTuning?.plinkoPayoutMultiplier ?? 1,
+      },
+    },
+    player: {
+      ...state.player,
+      cash: state.player?.cash ?? 0,
+      netWorth: state.player?.netWorth ?? 0,
+      casinoProfit: state.player?.casinoProfit ?? 0,
+      loan: {
+        principal: state.player?.loan?.principal ?? 0,
+        interestRate: state.player?.loan?.interestRate ?? 0.05,
+        nextIncreaseAt: state.player?.loan?.nextIncreaseAt ?? getNextInterestDate(),
+      },
     },
     casino: normalizeSavedCasino(state),
-    assets: state.assets.map(normalizeAssetHistory),
   };
-}
-
-function getVolatilityMultiplier(level: GameState['settings']['marketVolatility']) {
-  switch (level) {
-    case 'low':
-      return 0.7;
-    case 'high':
-      return 1.4;
-    case 'normal':
-    default:
-      return 1;
-  }
 }
 
 function getNextInterestDate() {
@@ -159,10 +199,7 @@ function settleOverdueInterest(state: GameState) {
     return state;
   }
 
-  const overdueSteps = Math.min(
-    Math.floor((Date.now() - dueAt) / INTEREST_INTERVAL_MS) + 1,
-    MAX_CATCH_UP_STEPS,
-  );
+  const overdueSteps = Math.min(Math.floor((Date.now() - dueAt) / INTEREST_INTERVAL_MS) + 1, MAX_CATCH_UP_STEPS);
   let settledState = state;
   let totalCharge = 0;
 
@@ -195,14 +232,6 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case 'hydrate':
       return finalizeState(settleOverdueInterest(normalizeSavedState(action.state)));
 
-    case 'tickMarket':
-      return finalizeState({
-        ...state,
-        assets: state.assets.map((asset) =>
-          simulateAssetTickWithMultiplier(asset, getVolatilityMultiplier(state.settings.marketVolatility)),
-        ),
-      });
-
     case 'borrow': {
       const amount = Math.max(0, Math.round(action.amount));
       const remainingCredit = getRemainingCredit(state.player.loan.principal, state.player.netWorth);
@@ -216,10 +245,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         ...state,
         player: {
           ...state.player,
-            cash: state.player.cash + borrowedAmount,
-            loan: {
-              ...state.player.loan,
-              principal: state.player.loan.principal + borrowedAmount,
+          cash: state.player.cash + borrowedAmount,
+          loan: {
+            ...state.player.loan,
+            principal: state.player.loan.principal + borrowedAmount,
             interestRate: Math.min(
               state.player.loan.interestRate + getEconomyDifficultyFactors(state.settings.economyDifficulty).borrowRateStep,
               0.3,
@@ -278,8 +307,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const result =
         action.result ??
         spinSlots(state.casino.slotsLosingStreak, {
-          winChanceOffset: casinoConfig.slotsWinChanceOffset,
-          payoutMultiplier: casinoConfig.slotsPayoutMultiplier,
+          winChanceOffset: casinoConfig.slotsWinChanceOffset + state.settings.adminTuning.slotsWinChanceOffset,
+          payoutMultiplier: casinoConfig.slotsPayoutMultiplier * state.settings.adminTuning.slotsPayoutMultiplier,
         });
       const isWin = result.payout > 0;
 
@@ -385,7 +414,15 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         return state;
       }
 
-      const result = action.result ?? playPlinko(wager, action.rows, action.risk);
+      const rawResult = action.result ?? playPlinko(wager, action.rows, action.risk);
+      const result =
+        state.settings.adminTuning.plinkoPayoutMultiplier === 1
+          ? rawResult
+          : {
+              ...rawResult,
+              multiplier: Number((rawResult.multiplier * state.settings.adminTuning.plinkoPayoutMultiplier).toFixed(2)),
+              payout: Math.max(0, Math.round(rawResult.payout * state.settings.adminTuning.plinkoPayoutMultiplier)),
+            };
       const netAmount = result.payout - wager;
 
       return finalizeState({
@@ -608,131 +645,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       });
     }
 
-    case 'buyAsset': {
-      const asset = getAssetById(state, action.assetId);
-      const shares = Math.max(0, Math.round(action.shares));
-
-      if (!asset || shares <= 0) {
-        return state;
-      }
-
-      const cost = Math.round(asset.price * shares);
-
-      if (cost > state.player.cash) {
-        return state;
-      }
-
-      const existingPosition = getPositionByAssetId(state, asset.id);
-      const positions = existingPosition
-        ? state.player.positions.map((position) => {
-            if (position.assetId !== asset.id) {
-              return position;
-            }
-
-            const totalShares = position.shares + shares;
-            const totalCost = position.averagePrice * position.shares + asset.price * shares;
-
-            return {
-              ...position,
-              shares: totalShares,
-              averagePrice: totalCost / totalShares,
-            };
-          })
-        : [
-            ...state.player.positions,
-            {
-              assetId: asset.id,
-              shares,
-              averagePrice: asset.price,
-            },
-          ];
-
-      return finalizeState({
-        ...state,
-        player: {
-          ...state.player,
-          cash: state.player.cash - cost,
-          positions,
-        },
-        transactions: [
-          createTransaction({
-            type: 'buy',
-            title: `Bought ${asset.symbol}`,
-            amount: -cost,
-            description: `${shares} shares at ${Math.round(asset.price)} CZK.`,
-          }),
-          ...state.transactions,
-        ],
-      });
-    }
-
-    case 'sellAsset': {
-      const asset = getAssetById(state, action.assetId);
-      const existingPosition = getPositionByAssetId(state, action.assetId);
-      const shares = Math.max(0, Math.round(action.shares));
-
-      if (!asset || !existingPosition || shares <= 0) {
-        return state;
-      }
-
-      const soldShares = Math.min(shares, existingPosition.shares);
-      const proceeds = Math.round(asset.price * soldShares);
-      const remainingShares = existingPosition.shares - soldShares;
-      const positions =
-        remainingShares <= 0
-          ? state.player.positions.filter((position) => position.assetId !== asset.id)
-          : state.player.positions.map((position) =>
-              position.assetId === asset.id ? { ...position, shares: remainingShares } : position,
-            );
-
-      return finalizeState({
-        ...state,
-        player: {
-          ...state.player,
-          cash: state.player.cash + proceeds,
-          positions,
-        },
-        transactions: [
-          createTransaction({
-            type: 'sell',
-            title: `Sold ${asset.symbol}`,
-            amount: proceeds,
-            description: `${soldShares} shares at ${Math.round(asset.price)} CZK.`,
-          }),
-          ...state.transactions,
-        ],
-      });
-    }
-
-    case 'setMarketSpeed': {
-      if (state.settings.marketSpeed === action.speed) {
-        return state;
-      }
-
-      return finalizeState({
-        ...state,
-        settings: {
-          ...state.settings,
-          marketSpeed: action.speed,
-        },
-      });
-    }
-
-    case 'setMarketVolatility': {
-      if (state.settings.marketVolatility === action.volatility) {
-        return state;
-      }
-
-      return finalizeState({
-        ...state,
-        settings: {
-          ...state.settings,
-          marketVolatility: action.volatility,
-        },
-      });
-    }
-
-    case 'setEconomyDifficulty': {
+    case 'setEconomyDifficulty':
       if (state.settings.economyDifficulty === action.difficulty) {
         return state;
       }
@@ -742,6 +655,156 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         settings: {
           ...state.settings,
           economyDifficulty: action.difficulty,
+        },
+      });
+
+    case 'setMasterMute':
+      return finalizeState({
+        ...state,
+        settings: {
+          ...state.settings,
+          feedback: {
+            ...state.settings.feedback,
+            masterMute: action.enabled,
+          },
+        },
+      });
+
+    case 'setHapticsIntensity':
+      return finalizeState({
+        ...state,
+        settings: {
+          ...state.settings,
+          feedback: {
+            ...state.settings.feedback,
+            hapticsIntensity: Math.max(0, Math.min(1, Number(action.intensity.toFixed(2)))),
+          },
+        },
+      });
+
+    case 'setBlackjackVolume':
+      return finalizeState({
+        ...state,
+        settings: {
+          ...state.settings,
+          feedback: {
+            ...state.settings.feedback,
+            blackjackVolume: Math.max(0, Math.min(1, Number(action.volume.toFixed(2)))),
+          },
+        },
+      });
+
+    case 'setRouletteVolume':
+      return finalizeState({
+        ...state,
+        settings: {
+          ...state.settings,
+          feedback: {
+            ...state.settings.feedback,
+            rouletteVolume: Math.max(0, Math.min(1, Number(action.volume.toFixed(2)))),
+          },
+        },
+      });
+
+    case 'setAdminSlotsWinChanceOffset':
+      return finalizeState({
+        ...state,
+        settings: {
+          ...state.settings,
+          adminTuning: {
+            ...state.settings.adminTuning,
+            slotsWinChanceOffset: Math.max(-0.2, Math.min(0.5, Number(action.offset.toFixed(3)))),
+          },
+        },
+      });
+
+    case 'setAdminSlotsPayoutMultiplier':
+      return finalizeState({
+        ...state,
+        settings: {
+          ...state.settings,
+          adminTuning: {
+            ...state.settings.adminTuning,
+            slotsPayoutMultiplier: Math.max(0.1, Math.min(10, Number(action.multiplier.toFixed(2)))),
+          },
+        },
+      });
+
+    case 'setAdminPlinkoPayoutMultiplier':
+      return finalizeState({
+        ...state,
+        settings: {
+          ...state.settings,
+          adminTuning: {
+            ...state.settings.adminTuning,
+            plinkoPayoutMultiplier: Math.max(0.1, Math.min(10, Number(action.multiplier.toFixed(2)))),
+          },
+        },
+      });
+
+    case 'simulateSlots': {
+      const count = Math.max(1, Math.min(1000, Math.round(action.count)));
+      const spinsToRun = Math.min(count, state.casino.tokens);
+
+      if (spinsToRun <= 0) {
+        return state;
+      }
+
+      const casinoConfig = getCasinoDifficultyConfig(state.settings.economyDifficulty);
+      let losingStreak = state.casino.slotsLosingStreak;
+      let totalPayout = 0;
+      let lastResult = state.casino.slotsLastResult;
+
+      for (let index = 0; index < spinsToRun; index += 1) {
+        const result = spinSlots(losingStreak, {
+          winChanceOffset: casinoConfig.slotsWinChanceOffset + state.settings.adminTuning.slotsWinChanceOffset,
+          payoutMultiplier: casinoConfig.slotsPayoutMultiplier * state.settings.adminTuning.slotsPayoutMultiplier,
+        });
+
+        totalPayout += result.payout;
+        lastResult = result;
+        losingStreak = result.payout > 0 ? 0 : losingStreak + 1;
+      }
+
+      return finalizeState({
+        ...state,
+        casino: {
+          ...state.casino,
+          tokens: state.casino.tokens - spinsToRun,
+          slotsLosingStreak: losingStreak,
+          slotsLastResult: lastResult,
+        },
+        player: {
+          ...state.player,
+          cash: state.player.cash + totalPayout,
+          casinoProfit: state.player.casinoProfit + totalPayout,
+        },
+        transactions: [
+          createTransaction({
+            type: 'casino',
+            title: `Slots sim x${spinsToRun}`,
+            amount: totalPayout,
+            description: `Batch simulation completed: ${spinsToRun} spins, total payout ${totalPayout} CZK.`,
+          }),
+          ...state.transactions,
+        ],
+      });
+    }
+
+    case 'setAdminPreset': {
+      const presets = {
+        default: { slotsWinChanceOffset: 0, slotsPayoutMultiplier: 1, plinkoPayoutMultiplier: 1 },
+        safe: { slotsWinChanceOffset: -0.04, slotsPayoutMultiplier: 0.85, plinkoPayoutMultiplier: 0.9 },
+        boost: { slotsWinChanceOffset: 0.1, slotsPayoutMultiplier: 1.45, plinkoPayoutMultiplier: 1.35 },
+        chaos: { slotsWinChanceOffset: 0.22, slotsPayoutMultiplier: 2.4, plinkoPayoutMultiplier: 2.2 },
+      } as const;
+      const next = presets[action.preset];
+
+      return finalizeState({
+        ...state,
+        settings: {
+          ...state.settings,
+          adminTuning: next,
         },
       });
     }

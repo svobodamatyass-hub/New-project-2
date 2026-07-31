@@ -183,7 +183,7 @@ function CardTile({ card, faceDown = false, index = 0 }: { card?: BlackjackCard;
   const opacity = useRef(new Animated.Value(0)).current;
   const flip = useRef(new Animated.Value(0)).current;
   const isRed = card?.suit === 'H' || card?.suit === 'D';
-  const suitColor = isRed ? colors.negative : colors.textMuted;
+  const suitColor = isRed ? colors.negative : '#18212A';
 
   useEffect(() => {
     translateY.setValue(10);
@@ -393,6 +393,16 @@ export function BlackjackScreen() {
     <>
       <SectionHeader title="Blackjack" />
 
+      <View style={styles.gameHero}>
+        <View style={styles.heroCopy}>
+          <Text style={styles.heroEyebrow}>PREMIUM TABLE</Text>
+          <Text style={styles.heroSubline}>Classic 21 | live hand</Text>
+        </View>
+        <View style={styles.heroIcon}>
+          <Club color={colors.warning} size={22} strokeWidth={2.4} />
+        </View>
+      </View>
+
       <View style={styles.statsRow}>
         <StatTile label="Cash" value={formatMoney(state.player.cash)} tone="default" />
         <StatTile label="Casino P/L" value={formatMoney(state.player.casinoProfit)} tone="warning" />
@@ -528,6 +538,43 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: 'row',
     gap: spacing.md,
+    marginTop: spacing.sm,
+  },
+  gameHero: {
+    minHeight: 72,
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs,
+    borderRadius: 14,
+    borderColor: '#4B3D26',
+    borderWidth: StyleSheet.hairlineWidth,
+    backgroundColor: '#211C16',
+    paddingHorizontal: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  heroCopy: {
+    gap: 4,
+  },
+  heroEyebrow: {
+    color: colors.warning,
+    fontFamily: typography.family,
+    fontSize: 10,
+    fontWeight: '900',
+  },
+  heroSubline: {
+    color: colors.textMuted,
+    fontFamily: typography.family,
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  heroIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: colors.warningSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   panelTitle: {
     color: colors.text,
@@ -536,11 +583,11 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   hand: {
-    minHeight: 106,
-    borderRadius: 8,
-    borderColor: colors.border,
+    minHeight: 116,
+    borderRadius: 14,
+    borderColor: '#313B4A',
     borderWidth: StyleSheet.hairlineWidth,
-    backgroundColor: colors.background,
+    backgroundColor: '#101923',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     justifyContent: 'center',
@@ -571,17 +618,17 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   cardTile: {
-    width: 52,
-    height: 72,
-    borderRadius: 8,
-    borderColor: '#323743',
+    width: 56,
+    height: 78,
+    borderRadius: 10,
+    borderColor: '#465265',
     borderWidth: StyleSheet.hairlineWidth,
-    backgroundColor: colors.surfaceRaised,
+    backgroundColor: '#F5F6F8',
     padding: spacing.xs,
     justifyContent: 'space-between',
   },
   cardBack: {
-    backgroundColor: colors.background,
+    backgroundColor: '#152538',
     borderColor: colors.warningMuted,
     alignItems: 'center',
     justifyContent: 'center',
@@ -615,7 +662,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   cardRank: {
-    color: colors.text,
+    color: '#18212A',
     fontFamily: typography.family,
     fontSize: 17,
     fontWeight: '900',
@@ -629,6 +676,7 @@ const styles = StyleSheet.create({
   actionRow: {
     flexDirection: 'row',
     gap: spacing.md,
+    marginTop: spacing.xs,
   },
   rulesButton: {
     position: 'absolute',

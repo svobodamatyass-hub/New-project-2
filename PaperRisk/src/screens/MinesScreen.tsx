@@ -238,6 +238,16 @@ export function MinesScreen() {
     <>
       <SectionHeader title="Mines" />
 
+      <View style={styles.gameHero}>
+        <View style={styles.heroCopy}>
+          <Text style={styles.heroEyebrow}>SAFE PICK</Text>
+          <Text style={styles.heroSubline}>Build your multiplier | cash out on your terms</Text>
+        </View>
+        <View style={styles.heroIcon}>
+          <Gem color={colors.positive} size={22} strokeWidth={2.4} />
+        </View>
+      </View>
+
       <View style={styles.statsRow}>
         <StatTile label="Cash" value={formatMoney(state.player.cash)} tone="default" />
         <StatTile label="Potential" value={safePicks > 0 ? formatMoney(projectedPayout) : formatMoney(wager)} tone="positive" />
@@ -496,13 +506,50 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: 'row',
     gap: spacing.md,
+    marginTop: spacing.sm,
+  },
+  gameHero: {
+    minHeight: 72,
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs,
+    borderRadius: 14,
+    borderColor: '#285A56',
+    borderWidth: StyleSheet.hairlineWidth,
+    backgroundColor: '#102524',
+    paddingHorizontal: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  heroCopy: {
+    gap: 4,
+  },
+  heroEyebrow: {
+    color: '#5DE0C1',
+    fontFamily: typography.family,
+    fontSize: 10,
+    fontWeight: '900',
+  },
+  heroSubline: {
+    color: colors.textMuted,
+    fontFamily: typography.family,
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  heroIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: colors.positiveSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   boardFrame: {
-    borderRadius: 8,
-    borderColor: colors.border,
+    borderRadius: 18,
+    borderColor: '#2A5D59',
     borderWidth: StyleSheet.hairlineWidth,
-    backgroundColor: colors.background,
-    padding: spacing.md,
+    backgroundColor: '#0D1D1C',
+    padding: spacing.lg,
     gap: spacing.md,
   },
   boardHeader: {
@@ -529,8 +576,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.accentSoft,
-    borderColor: colors.accentMuted,
+    backgroundColor: colors.positiveSoft,
+    borderColor: colors.positiveMuted,
     borderWidth: StyleSheet.hairlineWidth,
   },
   liveBadgeLoss: {
@@ -554,10 +601,10 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   tile: {
-    borderRadius: 8,
-    borderColor: colors.border,
+    borderRadius: 12,
+    borderColor: '#284B49',
     borderWidth: StyleSheet.hairlineWidth,
-    backgroundColor: colors.surface,
+    backgroundColor: '#132A29',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
@@ -592,10 +639,10 @@ const styles = StyleSheet.create({
   },
   settingCard: {
     gap: spacing.md,
-    borderRadius: 8,
-    borderColor: colors.border,
+    borderRadius: 14,
+    borderColor: '#273B46',
     borderWidth: StyleSheet.hairlineWidth,
-    backgroundColor: colors.background,
+    backgroundColor: '#111A21',
     padding: spacing.md,
   },
   settingHeader: {

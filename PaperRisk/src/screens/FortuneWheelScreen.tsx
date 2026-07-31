@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { CircleDotDashed } from 'lucide-react-native';
+import { CircleDotDashed, Crown, SlidersHorizontal } from 'lucide-react-native';
 import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, G, Path, Text as SvgText } from 'react-native-svg';
 
@@ -152,7 +152,7 @@ export function FortuneWheelScreen() {
 
   return (
     <>
-      <SectionHeader title="Wheel" />
+      <SectionHeader title="Wheel" caption="Fortune Hall | choose your rhythm" />
 
       <View style={styles.statsRow}>
         <StatTile label="Tokens" value={`${state.casino.tokens}`} tone={state.casino.tokens >= fortuneWheelTokenCost ? 'warning' : 'default'} />
@@ -164,6 +164,17 @@ export function FortuneWheelScreen() {
       </View>
 
       <Panel>
+        <View style={styles.stageHeader}>
+          <View>
+            <Text style={styles.eyebrow}>FORTUNE HALL</Text>
+            <Text style={styles.stageTitle}>One spin. One outcome.</Text>
+          </View>
+          <View style={styles.costBadge}>
+            <Crown color={colors.warning} size={14} />
+            <Text style={styles.costText}>{fortuneWheelTokenCost} TOKENS</Text>
+          </View>
+        </View>
+
         <View style={styles.wheelStage}>
           <View style={styles.pointer}>
             <View style={styles.pointerInner} />
@@ -179,6 +190,13 @@ export function FortuneWheelScreen() {
           </View>
         </View>
 
+        <View style={styles.controlHeader}>
+          <View style={styles.controlLabel}>
+            <SlidersHorizontal color={colors.accent} size={15} />
+            <Text style={styles.controlTitle}>Wheel density</Text>
+          </View>
+          <Text style={styles.controlHint}>{sections.length} segments</Text>
+        </View>
         <View style={styles.sectionControls}>
           {fortuneWheelSectionOptions.map((option) => {
             const isActive = option === sectionCount;
@@ -218,7 +236,13 @@ export function FortuneWheelScreen() {
       </Panel>
 
       <Panel>
-        <Text style={styles.panelTitle}>Token shop</Text>
+        <View style={styles.shopHeader}>
+          <View>
+            <Text style={styles.panelTitle}>Token vault</Text>
+            <Text style={styles.panelCaption}>Keep the wheel moving</Text>
+          </View>
+          <Crown color={colors.warning} size={20} />
+        </View>
         <View style={styles.packList}>
           {tokenPacks.map((pack) => (
             <View key={pack.id} style={styles.pack}>
@@ -248,10 +272,52 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
   },
+  stageHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+  },
+  eyebrow: {
+    color: colors.accent,
+    fontFamily: typography.family,
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 1,
+  },
+  stageTitle: {
+    color: colors.text,
+    fontFamily: typography.family,
+    fontSize: 20,
+    fontWeight: '900',
+    marginTop: 4,
+  },
+  costBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    borderRadius: 999,
+    backgroundColor: colors.warningSoft,
+    borderColor: colors.warningMuted,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
+  },
+  costText: {
+    color: colors.warning,
+    fontFamily: typography.family,
+    fontSize: 9,
+    fontWeight: '900',
+  },
   wheelStage: {
-    minHeight: 272,
+    minHeight: 302,
+    borderRadius: 12,
+    borderColor: colors.accentMuted,
+    borderWidth: StyleSheet.hairlineWidth,
+    backgroundColor: '#0A0D13',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   wheel: {
     width: wheelSize,
@@ -311,6 +377,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.sm,
   },
+  controlHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+  },
+  controlLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  controlTitle: {
+    color: colors.text,
+    fontFamily: typography.family,
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  controlHint: {
+    color: colors.textMuted,
+    fontFamily: typography.family,
+    fontSize: 11,
+    fontWeight: '800',
+  },
   sectionOption: {
     flex: 1,
     minHeight: 38,
@@ -342,6 +431,19 @@ const styles = StyleSheet.create({
     fontFamily: typography.family,
     fontSize: 16,
     fontWeight: '800',
+  },
+  panelCaption: {
+    color: colors.textMuted,
+    fontFamily: typography.family,
+    fontSize: 12,
+    fontWeight: '700',
+    marginTop: 3,
+  },
+  shopHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: spacing.md,
   },
   packList: {
     gap: spacing.md,

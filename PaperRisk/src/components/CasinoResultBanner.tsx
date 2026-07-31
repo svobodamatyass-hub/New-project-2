@@ -46,17 +46,22 @@ export function CasinoResultBanner({ caption, title, tone = 'default', value }: 
 
 const styles = StyleSheet.create({
   banner: {
-    minHeight: 58,
+    minHeight: 68,
     borderRadius: 8,
     borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
+    overflow: 'hidden',
+    shadowColor: '#000000',
+    shadowOpacity: 0.22,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 8 },
   },
   rail: {
-    width: 3,
+    width: 4,
     alignSelf: 'stretch',
     borderRadius: 999,
   },
@@ -74,12 +79,13 @@ const styles = StyleSheet.create({
   title: {
     color: colors.text,
     fontFamily: typography.family,
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '900',
   },
   value: {
     fontFamily: typography.family,
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '900',
+    textAlign: 'right',
   },
 });

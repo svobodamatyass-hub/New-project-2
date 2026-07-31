@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { TrendingUp } from 'lucide-react-native';
+import { Activity, ShieldCheck, TrendingUp } from 'lucide-react-native';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { ActionButton } from '../components/ActionButton';
@@ -106,7 +106,7 @@ export function CrashScreen() {
 
   return (
     <>
-      <SectionHeader title="Crash" />
+      <SectionHeader title="Crash" caption="Altitude | lock your exit" />
 
       <View style={styles.statsRow}>
         <StatTile label="Cash" value={formatMoney(state.player.cash)} tone="default" />
@@ -114,11 +114,30 @@ export function CrashScreen() {
       </View>
 
       <Panel>
+        <View style={styles.stageHeader}>
+          <View>
+            <Text style={styles.eyebrow}>ALTITUDE RUN</Text>
+            <Text style={styles.stageTitle}>Climb while the line is live</Text>
+          </View>
+          <View style={[styles.stateBadge, roundState === 'crashed' && styles.stateBadgeDanger]}>
+            <Activity color={roundState === 'crashed' ? colors.negative : colors.positive} size={14} />
+            <Text style={[styles.stateText, roundState === 'crashed' && styles.stateTextDanger]}>
+              {roundState === 'running' ? 'LIVE' : roundState === 'crashed' ? 'STOPPED' : 'READY'}
+            </Text>
+          </View>
+        </View>
+
         <View style={[styles.multiplierStage, roundState === 'crashed' && styles.crashedStage]}>
+          <View style={styles.stageGlow} />
           <Text style={[styles.multiplier, isRunning && styles.multiplierLive]}>{multiplier.toFixed(2)}x</Text>
           <Text style={styles.stageMeta}>
             {roundState === 'running' ? `${formatMoney(potentialPayout)}` : roundState === 'crashed' ? 'Crashed' : roundState === 'cashed' ? 'Cashed out' : 'Ready'}
           </Text>
+        </View>
+
+        <View style={styles.trustRow}>
+          <ShieldCheck color={colors.positive} size={15} />
+          <Text style={styles.trustText}>Paper credits only | cash out whenever you choose</Text>
         </View>
 
         <View style={styles.road}>
@@ -136,7 +155,10 @@ export function CrashScreen() {
           })}
         </View>
 
-        <Text style={styles.panelTitle}>Wager</Text>
+        <View style={styles.wagerHeader}>
+          <Text style={styles.panelTitle}>Wager</Text>
+          <Text style={styles.wagerHint}>Set your risk before launch</Text>
+        </View>
         <WagerInput disabled={isRunning} max={state.player.cash} onChange={setWager} value={wager} />
 
         <View style={styles.actionRow}>
@@ -182,6 +204,50 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
   },
+  stageHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+  },
+  eyebrow: {
+    color: colors.positive,
+    fontFamily: typography.family,
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 1,
+  },
+  stageTitle: {
+    color: colors.text,
+    fontFamily: typography.family,
+    fontSize: 20,
+    fontWeight: '900',
+    marginTop: 4,
+  },
+  stateBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    borderRadius: 999,
+    backgroundColor: colors.positiveSoft,
+    borderColor: colors.positiveMuted,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
+  },
+  stateBadgeDanger: {
+    backgroundColor: colors.negativeSoft,
+    borderColor: colors.negativeMuted,
+  },
+  stateText: {
+    color: colors.positive,
+    fontFamily: typography.family,
+    fontSize: 9,
+    fontWeight: '900',
+  },
+  stateTextDanger: {
+    color: colors.negative,
+  },
   panelTitle: {
     color: colors.text,
     fontFamily: typography.family,
@@ -189,13 +255,14 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   multiplierStage: {
-    minHeight: 112,
-    borderRadius: 8,
-    borderColor: colors.border,
+    minHeight: 154,
+    borderRadius: 12,
+    borderColor: colors.positiveMuted,
     borderWidth: StyleSheet.hairlineWidth,
-    backgroundColor: colors.background,
+    backgroundColor: '#0A1714',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   crashedStage: {
     backgroundColor: colors.negativeSoft,
@@ -210,6 +277,14 @@ const styles = StyleSheet.create({
   multiplierLive: {
     color: colors.warning,
   },
+  stageGlow: {
+    position: 'absolute',
+    width: 190,
+    height: 190,
+    borderRadius: 95,
+    backgroundColor: colors.positiveSoft,
+    opacity: 0.8,
+  },
   stageMeta: {
     color: colors.textMuted,
     fontFamily: typography.family,
@@ -221,11 +296,11 @@ const styles = StyleSheet.create({
   road: {
     flexDirection: 'row',
     gap: spacing.xs,
-    minHeight: 76,
-    borderRadius: 8,
-    borderColor: colors.border,
+    minHeight: 88,
+    borderRadius: 10,
+    borderColor: colors.accentMuted,
     borderWidth: StyleSheet.hairlineWidth,
-    backgroundColor: colors.background,
+    backgroundColor: '#0C1018',
     padding: spacing.sm,
   },
   lane: {
@@ -250,6 +325,33 @@ const styles = StyleSheet.create({
     fontFamily: typography.family,
     fontSize: 20,
     fontWeight: '900',
+  },
+  trustRow: {
+    minHeight: 34,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.xs,
+  },
+  trustText: {
+    flex: 1,
+    color: colors.textMuted,
+    fontFamily: typography.family,
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  wagerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+  },
+  wagerHint: {
+    color: colors.textFaint,
+    fontFamily: typography.family,
+    fontSize: 10,
+    fontWeight: '800',
+    textTransform: 'uppercase',
   },
   actionRow: {
     flexDirection: 'row',

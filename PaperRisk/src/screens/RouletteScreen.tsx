@@ -187,6 +187,16 @@ export function RouletteScreen() {
     <>
       <SectionHeader title="Roulette" />
 
+      <View style={styles.gameHero}>
+        <View style={styles.heroCopy}>
+          <Text style={styles.heroEyebrow}>EUROPEAN WHEEL</Text>
+          <Text style={styles.heroSubline}>European layout | live spin</Text>
+        </View>
+        <View style={styles.heroIcon}>
+          <CircleDot color={colors.negative} size={22} strokeWidth={2.4} />
+        </View>
+      </View>
+
       <View style={styles.statsRow}>
         <StatTile label="Cash" value={formatMoney(state.player.cash)} tone="default" />
         <StatTile label="Casino P/L" value={formatMoney(state.player.casinoProfit)} tone="warning" />
@@ -328,6 +338,43 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: 'row',
     gap: spacing.md,
+    marginTop: spacing.sm,
+  },
+  gameHero: {
+    minHeight: 72,
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs,
+    borderRadius: 14,
+    borderColor: '#5C3038',
+    borderWidth: StyleSheet.hairlineWidth,
+    backgroundColor: '#25161D',
+    paddingHorizontal: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  heroCopy: {
+    gap: 4,
+  },
+  heroEyebrow: {
+    color: '#F06A73',
+    fontFamily: typography.family,
+    fontSize: 10,
+    fontWeight: '900',
+  },
+  heroSubline: {
+    color: colors.textMuted,
+    fontFamily: typography.family,
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  heroIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: colors.negativeSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   panelTitle: {
     color: colors.text,
@@ -358,8 +405,8 @@ const styles = StyleSheet.create({
   },
   chip: {
     minWidth: 82,
-    minHeight: 34,
-    borderRadius: 8,
+    minHeight: 38,
+    borderRadius: 12,
     borderColor: colors.warningMuted,
     borderWidth: StyleSheet.hairlineWidth,
     backgroundColor: colors.warningSoft,
@@ -374,6 +421,10 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   table: {
+    marginTop: spacing.xs,
+    padding: spacing.sm,
+    borderRadius: 14,
+    backgroundColor: '#0E131A',
     flexDirection: 'row',
     gap: spacing.xs,
   },
@@ -397,8 +448,8 @@ const styles = StyleSheet.create({
   numberCell: {
     flex: 1,
     minWidth: 0,
-    height: 36,
-    borderRadius: 6,
+    height: 38,
+    borderRadius: 8,
     borderColor: colors.border,
     borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
@@ -444,9 +495,15 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   wheelStage: {
-    minHeight: 246,
+    minHeight: 282,
+    marginTop: spacing.xs,
+    borderRadius: 18,
+    borderColor: '#343B45',
+    borderWidth: StyleSheet.hairlineWidth,
+    backgroundColor: '#0C1117',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   pointer: {
     position: 'absolute',
@@ -471,7 +528,7 @@ const styles = StyleSheet.create({
     width: 78,
     height: 78,
     borderRadius: 39,
-    backgroundColor: colors.background,
+    backgroundColor: '#0E141B',
     borderColor: colors.warningMuted,
     borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',

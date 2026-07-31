@@ -334,6 +334,16 @@ export function PlinkoScreen() {
     <>
       <SectionHeader title="Plinko" />
 
+      <View style={styles.gameHero}>
+        <View style={styles.heroCopy}>
+          <Text style={styles.heroEyebrow}>DROP BOARD</Text>
+          <Text style={styles.heroSubline}>Pick a risk profile | chase the landing slot</Text>
+        </View>
+        <View style={styles.heroIcon}>
+          <CirclePlay color={colors.warning} size={22} strokeWidth={2.4} />
+        </View>
+      </View>
+
       <View style={styles.statsRow}>
         <StatTile label="Cash" value={formatMoney(displayedCash)} tone="default" />
         <StatTile label="Batch" value={formatMoney(totalBatchWager)} tone="warning" />
@@ -471,14 +481,52 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: 'row',
     gap: spacing.md,
+    marginTop: spacing.sm,
+  },
+  gameHero: {
+    minHeight: 72,
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs,
+    borderRadius: 14,
+    borderColor: '#4C3B62',
+    borderWidth: StyleSheet.hairlineWidth,
+    backgroundColor: '#21172F',
+    paddingHorizontal: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  heroCopy: {
+    gap: 4,
+  },
+  heroEyebrow: {
+    color: '#C99AFF',
+    fontFamily: typography.family,
+    fontSize: 10,
+    fontWeight: '900',
+  },
+  heroSubline: {
+    color: colors.textMuted,
+    fontFamily: typography.family,
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  heroIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: colors.warningSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   boardStage: {
     position: 'relative',
     overflow: 'hidden',
-    borderRadius: 8,
-    borderColor: colors.border,
+    borderRadius: 18,
+    borderColor: '#49365B',
     borderWidth: StyleSheet.hairlineWidth,
-    backgroundColor: colors.background,
+    backgroundColor: '#130F1D',
+    padding: spacing.xs,
   },
   ball: {
     position: 'absolute',
@@ -494,6 +542,7 @@ const styles = StyleSheet.create({
   },
   controlSection: {
     gap: spacing.sm,
+    paddingTop: spacing.xs,
   },
   toggleRow: {
     flexDirection: 'row',
@@ -502,7 +551,7 @@ const styles = StyleSheet.create({
   toggle: {
     flex: 1,
     minHeight: 40,
-    borderRadius: 8,
+    borderRadius: 10,
     borderColor: colors.border,
     borderWidth: StyleSheet.hairlineWidth,
     backgroundColor: colors.background,
@@ -533,14 +582,15 @@ const styles = StyleSheet.create({
   summaryStrip: {
     flexDirection: 'row',
     gap: spacing.sm,
+    marginTop: spacing.xs,
   },
   summaryPill: {
     flex: 1,
     minHeight: 58,
-    borderRadius: 8,
+    borderRadius: 12,
     borderColor: colors.border,
     borderWidth: StyleSheet.hairlineWidth,
-    backgroundColor: colors.background,
+    backgroundColor: '#11141D',
     justifyContent: 'center',
     paddingHorizontal: spacing.md,
     gap: 2,

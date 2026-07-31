@@ -21,17 +21,20 @@ export function InfoRow({ label, value, tone = 'default' }: InfoRowProps) {
 
 const styles = StyleSheet.create({
   row: {
-    minHeight: 28,
+    minHeight: 34,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.md,
+    borderBottomColor: colors.border,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    paddingBottom: spacing.sm,
   },
   label: {
     color: colors.textMuted,
     fontFamily: typography.family,
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '700',
   },
   value: {
     fontFamily: typography.family,

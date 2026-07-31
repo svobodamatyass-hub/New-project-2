@@ -15,8 +15,11 @@ export function BrandHeader({ screen, status = 'Paper', statusTone = 'positive' 
 
   return (
     <View style={styles.header}>
-      <View>
-        <Text style={styles.brand}>PaperRisk</Text>
+      <View style={styles.brandBlock}>
+        <View style={styles.brandRow}>
+          <View style={styles.brandMark} />
+          <Text style={styles.brand}>PaperRisk Casino</Text>
+        </View>
         <Text style={styles.screen}>{screen}</Text>
       </View>
       <View style={styles.status}>
@@ -29,14 +32,32 @@ export function BrandHeader({ screen, status = 'Paper', statusTone = 'positive' 
 
 const styles = StyleSheet.create({
   header: {
-    minHeight: 48,
+    minHeight: 52,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.md,
   },
+  brandBlock: {
+    gap: 3,
+  },
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  brandMark: {
+    width: 8,
+    height: 8,
+    borderRadius: 999,
+    backgroundColor: colors.warning,
+    shadowColor: colors.warning,
+    shadowOpacity: 0.55,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 0 },
+  },
   brand: {
-    color: colors.textFaint,
+    color: colors.textMuted,
     fontFamily: typography.family,
     fontSize: 11,
     fontWeight: '800',
@@ -45,9 +66,8 @@ const styles = StyleSheet.create({
   screen: {
     color: colors.text,
     fontFamily: typography.family,
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: '900',
-    marginTop: 1,
   },
   status: {
     flexDirection: 'row',

@@ -18,10 +18,13 @@ import type {
 import { gameReducer } from './reducer';
 
 export type SaveStatus = 'loading' | 'saved' | 'saving' | 'error';
+const PERSIST_DEBOUNCE_MS = 320;
+const MAX_PERSISTED_TRANSACTIONS = 60;
 
 type GameContextValue = {
   state: GameState;
   saveStatus: SaveStatus;
+  hasHydrated: boolean;
   setEconomyDifficulty: (difficulty: GameState['settings']['economyDifficulty']) => void;
   setMasterMute: (enabled: boolean) => void;
   setHapticsIntensity: (intensity: number) => void;
@@ -48,6 +51,13 @@ type GameContextValue = {
 };
 
 const GameContext = createContext<GameContextValue | null>(null);
+
+function createPersistedState(state: GameState): GameState {
+  return {
+    ...state,
+    transactions: state.transactions.slice(0, MAX_PERSISTED_TRANSACTIONS),
+  };
+}
 
 export function GameProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(gameReducer, undefined, createInitialGameState);
@@ -94,22 +104,25 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
 
     let isCurrent = true;
-    setSaveStatus('saving');
+    const timeout = setTimeout(() => {
+      setSaveStatus('saving');
 
-    saveGameState(state)
-      .then(() => {
-        if (isCurrent) {
-          setSaveStatus('saved');
-        }
-      })
-      .catch(() => {
-        if (isCurrent) {
-          setSaveStatus('error');
-        }
-      });
+      saveGameState(createPersistedState(state))
+        .then(() => {
+          if (isCurrent) {
+            setSaveStatus('saved');
+          }
+        })
+        .catch(() => {
+          if (isCurrent) {
+            setSaveStatus('error');
+          }
+        });
+    }, PERSIST_DEBOUNCE_MS);
 
     return () => {
       isCurrent = false;
+      clearTimeout(timeout);
     };
   }, [hasHydrated, state]);
 
@@ -117,6 +130,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     () => ({
       state,
       saveStatus,
+      hasHydrated,
       setEconomyDifficulty: (difficulty: GameState['settings']['economyDifficulty']) =>
         dispatch({ type: 'setEconomyDifficulty', difficulty }),
       setMasterMute: (enabled: boolean) => dispatch({ type: 'setMasterMute', enabled }),
@@ -151,7 +165,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         dispatch({ type: 'reset' });
       },
     }),
-    [saveStatus, state],
+    [hasHydrated, saveStatus, state],
   );
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

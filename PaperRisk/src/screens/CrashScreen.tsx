@@ -130,7 +130,7 @@ export function CrashScreen() {
 
             return (
               <View key={laneNumber} style={[styles.lane, isPassed && styles.lanePassed, isCurrent && styles.laneCurrent]}>
-                <Text style={styles.laneText}>{isPassed ? '✓' : isCurrent ? '🐔' : ''}</Text>
+                <Text style={styles.laneText}>{isPassed ? '+' : isCurrent ? '>' : ''}</Text>
               </View>
             );
           })}
@@ -165,7 +165,7 @@ export function CrashScreen() {
         <Panel>
           <InfoRow label="Last" value={lastResult.outcome} tone={lastResult.outcome === 'cashout' ? 'positive' : 'negative'} />
           <InfoRow label="Crash" value={`${lastResult.crashMultiplier.toFixed(2)}x`} />
-          <InfoRow label="Cash out" value={lastResult.cashoutMultiplier ? `${lastResult.cashoutMultiplier.toFixed(2)}x` : '-'} />
+          <InfoRow label="Cash out" value={lastResult.cashoutMultiplier ? `${lastResult.cashoutMultiplier.toFixed(2)}x` : 'No cash out'} />
           <InfoRow
             label="Net"
             value={formatMoney(lastResult.payout - lastResult.wager)}

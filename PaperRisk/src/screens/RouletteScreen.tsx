@@ -234,7 +234,7 @@ export function RouletteScreen() {
             />
           </>
         ) : (
-          <Text style={styles.empty}>-</Text>
+          <Text style={styles.empty}>Pick a bet and spin the wheel to log the first result.</Text>
         )}
       </Panel>
 

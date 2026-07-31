@@ -21,10 +21,11 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   title: {
-    color: colors.text,
+    color: colors.textMuted,
     fontFamily: typography.family,
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 12,
+    fontWeight: '900',
+    textTransform: 'uppercase',
   },
   caption: {
     color: colors.textMuted,

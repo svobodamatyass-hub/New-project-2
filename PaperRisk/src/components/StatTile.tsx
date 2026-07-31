@@ -22,13 +22,17 @@ export function StatTile({ label, value, tone = 'default' }: StatTileProps) {
 const styles = StyleSheet.create({
   tile: {
     flex: 1,
-    minHeight: 88,
+    minHeight: 92,
     justifyContent: 'space-between',
     borderColor: colors.border,
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 8,
     backgroundColor: colors.surfaceRaised,
     padding: spacing.md,
+    shadowColor: '#000000',
+    shadowOpacity: 0.2,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 8 },
   },
   label: {
     color: colors.textMuted,
@@ -39,7 +43,7 @@ const styles = StyleSheet.create({
   },
   value: {
     fontFamily: typography.family,
-    fontSize: 20,
+    fontSize: 21,
     fontWeight: '900',
   },
 });

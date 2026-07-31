@@ -249,7 +249,7 @@ export function MinesScreen() {
             <View>
               <Text style={styles.boardTitle}>5x5 board</Text>
               <Text style={styles.boardMeta}>
-                {mineCount} mine{mineCount === 1 ? '' : 's'} • {safePicks} safe
+                {mineCount} mine{mineCount === 1 ? '' : 's'} | {safePicks} safe
               </Text>
             </View>
             <View style={[styles.liveBadge, roundState === 'loss' ? styles.liveBadgeLoss : roundState === 'cashout' ? styles.liveBadgeCashout : null]}>

@@ -5,6 +5,7 @@ import { BanknoteArrowDown, BanknoteArrowUp } from 'lucide-react-native';
 
 import { ActionButton } from '../components/ActionButton';
 import { AmountSelector } from '../components/AmountSelector';
+import { Badge } from '../components/Badge';
 import { BrandHeader } from '../components/BrandHeader';
 import { DebtMeter } from '../components/DebtMeter';
 import { InfoRow } from '../components/InfoRow';
@@ -59,6 +60,19 @@ export function WalletScreen() {
       />
       <SectionHeader title="Credit" />
 
+      <Panel>
+        <View style={styles.heroHeader}>
+          <View>
+            <Text style={styles.label}>Open debt</Text>
+            <Text adjustsFontSizeToFit numberOfLines={1} style={styles.debt}>
+              {formatMoney(player.loan.principal)}
+            </Text>
+          </View>
+          <Badge label={loanPressure} tone={player.loan.principal > 0 ? 'warning' : 'positive'} />
+        </View>
+        <Text style={styles.helper}>Borrow fast, but every active loan keeps compounding pressure on the bankroll.</Text>
+      </Panel>
+
       <View style={styles.statsRow}>
         <StatTile label="Cash" value={formatMoney(player.cash)} />
         <StatTile
@@ -70,11 +84,7 @@ export function WalletScreen() {
       </View>
 
       <Panel>
-        <Text style={styles.label}>Open debt</Text>
-        <Text adjustsFontSizeToFit numberOfLines={1} style={styles.debt}>
-          {formatMoney(player.loan.principal)}
-        </Text>
-        <View style={styles.divider} />
+        <Text style={styles.panelTitle}>Loan terms</Text>
         <InfoRow label="Rate" value={formatPercent(player.loan.interestRate * 100)} />
         <InfoRow label="Available" value={formatMoney(remainingCredit)} tone={remainingCredit > 0 ? 'positive' : 'warning'} />
         <InfoRow
@@ -127,6 +137,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
   },
+  heroHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: spacing.md,
+  },
   label: {
     color: colors.textMuted,
     fontFamily: typography.family,
@@ -134,14 +150,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   debt: {
-    color: colors.text,
+    color: colors.warning,
     fontFamily: typography.family,
-    fontSize: 34,
-    fontWeight: '800',
-  },
-  divider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: colors.border,
+    fontSize: 38,
+    fontWeight: '900',
+    marginTop: 4,
   },
   helper: {
     color: colors.textFaint,
@@ -153,6 +166,12 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: 'row',
     gap: spacing.sm,
+  },
+  panelTitle: {
+    color: colors.text,
+    fontFamily: typography.family,
+    fontSize: 16,
+    fontWeight: '800',
   },
   historyHeader: {
     flexDirection: 'row',

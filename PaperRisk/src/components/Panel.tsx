@@ -20,9 +20,9 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     gap: spacing.md,
     shadowColor: '#000000',
-    shadowOpacity: 0.16,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 2,
+    shadowOpacity: 0.3,
+    shadowRadius: 22,
+    shadowOffset: { width: 0, height: 14 },
+    elevation: 6,
   },
 });

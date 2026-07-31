@@ -48,8 +48,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
   },
   optionActive: {
-    backgroundColor: colors.surfaceRaised,
-    borderColor: colors.textMuted,
+    backgroundColor: colors.warningSoft,
+    borderColor: colors.warningMuted,
   },
   pressed: {
     opacity: 0.72,
@@ -61,6 +61,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   labelActive: {
-    color: colors.text,
+    color: colors.warning,
   },
 });

@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Slider from '@react-native-community/slider';
 
 import { ActionButton } from '../components/ActionButton';
+import { Badge } from '../components/Badge';
 import { InfoRow } from '../components/InfoRow';
 import { Panel } from '../components/Panel';
 import { getSaveStatusLabel } from '../components/SaveStatusBadge';
@@ -232,6 +233,17 @@ export function SettingsScreen() {
       <SectionHeader title="Settings" />
 
       <Panel>
+        <View style={styles.heroHeader}>
+          <View>
+            <Text style={styles.heroEyebrow}>Control room</Text>
+            <Text style={styles.heroTitle}>{profileOptions.find((profile) => profile.id === activeProfileId)?.label ?? 'Balanced'}</Text>
+          </View>
+          <Badge label={state.settings.feedback.masterMute ? 'Muted' : 'Audio active'} tone={state.settings.feedback.masterMute ? 'negative' : 'positive'} />
+        </View>
+        <Text style={styles.feedbackHint}>Tune pressure, sound and local behavior without leaving the app.</Text>
+      </Panel>
+
+      <Panel>
         <Text style={styles.panelTitle}>Profile</Text>
         <View style={styles.sectionBlock}>
           <Text style={styles.controlLabel}>Style</Text>
@@ -445,6 +457,26 @@ export function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
+  heroHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+  },
+  heroEyebrow: {
+    color: colors.textMuted,
+    fontFamily: typography.family,
+    fontSize: 12,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+  },
+  heroTitle: {
+    color: colors.warning,
+    fontFamily: typography.family,
+    fontSize: 32,
+    fontWeight: '900',
+    marginTop: 4,
+  },
   panelTitle: {
     color: colors.text,
     fontFamily: typography.family,

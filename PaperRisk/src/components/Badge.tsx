@@ -17,9 +17,9 @@ export function Badge({ label, tone = 'neutral' }: BadgeProps) {
 
 const styles = StyleSheet.create({
   badge: {
-    minHeight: 26,
+    minHeight: 28,
     borderRadius: 8,
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: StyleSheet.hairlineWidth,
@@ -47,8 +47,9 @@ const styles = StyleSheet.create({
   label: {
     color: colors.textMuted,
     fontFamily: typography.family,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '800',
+    textTransform: 'uppercase',
   },
   positiveLabel: {
     color: colors.positive,

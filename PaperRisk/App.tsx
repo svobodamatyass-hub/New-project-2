@@ -1,25 +1,43 @@
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
 import { Platform, SafeAreaView, StyleSheet, View } from 'react-native';
 
 import { AppShell } from './src/components/AppShell';
-import { RouletteLoader } from './src/components/RouletteLoader';
+import {
+  CasinoGameSkeleton,
+  CasinoHubSkeleton,
+  HomeScreenSkeleton,
+  SettingsScreenSkeleton,
+  WalletScreenSkeleton,
+} from './src/components/ScreenSkeletons';
 import { GameProvider } from './src/game/GameProvider';
+import { useGame } from './src/game/GameProvider';
 import { tabs, type TabKey } from './src/navigation/tabs';
-import { CasinoScreen } from './src/screens/CasinoScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
-import { SettingsScreen } from './src/screens/SettingsScreen';
-import { WalletScreen } from './src/screens/WalletScreen';
 import { colors } from './src/theme/colors';
 
-export default function App() {
-  const [activeTab, setActiveTab] = useState<TabKey>('home');
-  const [isBooting, setIsBooting] = useState(true);
+const CasinoScreen = lazy(() => import('./src/screens/CasinoScreen').then((module) => ({ default: module.CasinoScreen })));
+const WalletScreen = lazy(() => import('./src/screens/WalletScreen').then((module) => ({ default: module.WalletScreen })));
+const SettingsScreen = lazy(() => import('./src/screens/SettingsScreen').then((module) => ({ default: module.SettingsScreen })));
 
-  useEffect(() => {
-    const timer = setTimeout(() => setIsBooting(false), 1800);
-    return () => clearTimeout(timer);
-  }, []);
+export default function App() {
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar style="light" />
+      <View style={styles.app}>
+        <View style={styles.deviceFrame}>
+          <GameProvider>
+            <AppContent />
+          </GameProvider>
+        </View>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+function AppContent() {
+  const [activeTab, setActiveTab] = useState<TabKey>('home');
+  const { hasHydrated } = useGame();
 
   const screen = useMemo(() => {
     switch (activeTab) {
@@ -35,20 +53,26 @@ export default function App() {
     }
   }, [activeTab]);
 
+  const fallback = useMemo(() => {
+    if (activeTab === 'casino') {
+      return <CasinoHubSkeleton />;
+    }
+
+    if (activeTab === 'wallet') {
+      return <WalletScreenSkeleton />;
+    }
+
+    if (activeTab === 'settings') {
+      return <SettingsScreenSkeleton />;
+    }
+
+    return <HomeScreenSkeleton />;
+  }, [activeTab]);
+
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar style="light" />
-      <View style={styles.app}>
-        <View style={styles.deviceFrame}>
-          <GameProvider>
-            <AppShell activeTab={activeTab} tabs={tabs} onTabPress={setActiveTab}>
-              {screen}
-            </AppShell>
-            {isBooting ? <RouletteLoader /> : null}
-          </GameProvider>
-        </View>
-      </View>
-    </SafeAreaView>
+    <AppShell activeTab={activeTab} tabs={tabs} onTabPress={setActiveTab}>
+      {hasHydrated ? <Suspense fallback={fallback}>{screen}</Suspense> : fallback}
+    </AppShell>
   );
 }
 
@@ -74,6 +98,7 @@ const styles = StyleSheet.create({
         borderLeftWidth: StyleSheet.hairlineWidth,
         borderRightColor: colors.border,
         borderRightWidth: StyleSheet.hairlineWidth,
+        boxShadow: '0 24px 80px rgba(0,0,0,0.45)',
       },
       default: {},
     }),

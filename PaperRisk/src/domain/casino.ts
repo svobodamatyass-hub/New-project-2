@@ -17,7 +17,7 @@ export const casinoGames = [
   {
     id: 'slots',
     title: 'Slots',
-    description: 'Token spins with a rising pity chance.',
+    description: 'Token reels with a live pity curve and wider hit spread.',
     accent: 'warning',
   },
   {
@@ -29,13 +29,13 @@ export const casinoGames = [
   {
     id: 'roulette',
     title: 'Roulette',
-    description: 'Pick a color and accept the swing.',
+    description: 'Fairer casual odds with real wheel pacing.',
     accent: 'negative',
   },
   {
     id: 'fortune',
     title: 'Wheel',
-    description: 'Token wheel with adjustable sections.',
+    description: 'Token wheel with steadier mid-tier rewards.',
     accent: 'accent',
   },
   {
@@ -59,9 +59,9 @@ export const casinoGames = [
 ] as const;
 
 export const tokenPacks = [
-  { id: 'starter', tokens: 25, price: 1000 },
-  { id: 'stack', tokens: 75, price: 2500 },
-  { id: 'vault', tokens: 180, price: 5000 },
+  { id: 'starter', tokens: 25, price: 750 },
+  { id: 'stack', tokens: 75, price: 2250 },
+  { id: 'vault', tokens: 180, price: 5400 },
 ] as const;
 
 export const slotsSymbols = [
@@ -79,9 +79,9 @@ export const slotsSymbols = [
   '\u{26A1}',
 ] as const;
 
-export const slotsBaseWinChance = 0.24;
-export const slotsChanceStep = 0;
-export const slotsMaxWinChance = 0.24;
+export const slotsBaseWinChance = 0.18;
+export const slotsChanceStep = 0.003;
+export const slotsMaxWinChance = 0.3;
 export const fortuneWheelTokenCost = 4;
 export const defaultFortuneWheelSectionCount = 20;
 export const fortuneWheelSectionOptions = [12, 16, 20, 24] as const;
@@ -111,7 +111,7 @@ export function getCasinoDifficultyConfig(difficulty: CasinoDifficulty): CasinoD
       return {
         slotsWinChanceOffset: 0.04,
         slotsPayoutMultiplier: 1.1,
-        rouletteBoostOffset: 0.02,
+        rouletteBoostOffset: 0.005,
         roulettePayoutMultiplier: 1.05,
         blackjackPayoutMultiplier: 1,
       };
@@ -119,7 +119,7 @@ export function getCasinoDifficultyConfig(difficulty: CasinoDifficulty): CasinoD
       return {
         slotsWinChanceOffset: -0.06,
         slotsPayoutMultiplier: 0.9,
-        rouletteBoostOffset: -0.015,
+        rouletteBoostOffset: -0.005,
         roulettePayoutMultiplier: 0.93,
         blackjackPayoutMultiplier: 1,
       };
@@ -311,29 +311,29 @@ export function spinSlots(
 
 const fortuneWheelBaseSections: FortuneWheelSection[] = [
   { id: 'zero-a', label: '0', payout: 0 },
-  { id: 'ten-a', label: '10', payout: 10 },
+  { id: 'twenty-a', label: '20', payout: 20 },
   { id: 'zero-b', label: '0', payout: 0 },
-  { id: 'fifty-a', label: '55', payout: 55 },
+  { id: 'sixty-a', label: '60', payout: 60 },
   { id: 'zero-c', label: '0', payout: 0 },
-  { id: 'twenty-five-a', label: '25', payout: 25 },
-  { id: 'zero-d', label: '0', payout: 0 },
-  { id: 'hundred-a', label: '105', payout: 105 },
-  { id: 'ten-b', label: '10', payout: 10 },
+  { id: 'thirty-five-a', label: '35', payout: 35 },
   { id: 'fifteen-a', label: '15', payout: 15 },
-  { id: 'fifty-b', label: '55', payout: 55 },
-  { id: 'zero-f', label: '0', payout: 0 },
+  { id: 'ninety-a', label: '90', payout: 90 },
+  { id: 'twenty-five-a', label: '25', payout: 25 },
+  { id: 'forty-five-a', label: '45', payout: 45 },
+  { id: 'seventy-a', label: '70', payout: 70 },
+  { id: 'zero-d', label: '0', payout: 0 },
+  { id: 'thirty-five-b', label: '35', payout: 35 },
+  { id: 'fifteen-b', label: '15', payout: 15 },
+  { id: 'one-ninety', label: '190', payout: 190 },
+  { id: 'twenty-a', label: '20', payout: 20 },
+  { id: 'zero-e', label: '0', payout: 0 },
+  { id: 'ninety-b', label: '90', payout: 90 },
+  { id: 'three-eighty', label: '380', payout: 380 },
+  { id: 'jackpot', label: 'Jackpot', payout: 1120, isJackpot: true },
   { id: 'twenty-five-b', label: '25', payout: 25 },
-  { id: 'zero-g', label: '0', payout: 0 },
-  { id: 'two-fifty', label: '265', payout: 265 },
-  { id: 'ten-c', label: '10', payout: 10 },
-  { id: 'zero-h', label: '0', payout: 0 },
-  { id: 'fifty-c', label: '55', payout: 55 },
-  { id: 'five-hundred', label: '525', payout: 525 },
-  { id: 'jackpot', label: 'Jackpot', payout: 790, isJackpot: true },
-  { id: 'zero-i', label: '0', payout: 0 },
-  { id: 'twenty-five-c', label: '25', payout: 25 },
-  { id: 'seventy-five', label: '75', payout: 75 },
-  { id: 'hundred-b', label: '105', payout: 105 },
+  { id: 'sixty-b', label: '60', payout: 60 },
+  { id: 'one-twenty', label: '120', payout: 120 },
+  { id: 'fifty-five-b', label: '55', payout: 55 },
 ];
 
 export function getFortuneWheelSections(sectionCount = defaultFortuneWheelSectionCount): FortuneWheelSection[] {
@@ -609,7 +609,7 @@ export function getRouletteBetLabel(bet: RouletteBet) {
 }
 
 export function getRouletteBetPayoutMultiplier(bet: RouletteBet) {
-  return bet.type === 'number' ? 20 : 2;
+  return bet.type === 'number' ? 26 : 2;
 }
 
 export function getRouletteBaseWinChance(bet: RouletteBet) {
@@ -621,9 +621,7 @@ export function getRouletteBaseWinChance(bet: RouletteBet) {
 }
 
 export function getRouletteBoostedWinChance(bet: RouletteBet, boostOffset = 0) {
-  const straightBetPenalty = bet.type === 'number' ? 0.01 : 0;
-
-  return Math.min(Math.max(0.01, getRouletteBaseWinChance(bet) + 0.05 + boostOffset - straightBetPenalty), 0.98);
+  return Math.min(Math.max(0.01, getRouletteBaseWinChance(bet) + 0.01 + boostOffset), 0.98);
 }
 
 function isRouletteWin(bet: RouletteBet, number: number, color: RouletteColor) {

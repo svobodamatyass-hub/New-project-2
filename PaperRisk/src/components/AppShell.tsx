@@ -42,7 +42,7 @@ export function AppShell({ activeTab, tabs, children, onTabPress }: AppShellProp
                 ]}
               >
                 <Icon size={22} color={tone} strokeWidth={isActive ? 2.4 : 2} />
-                {isActive ? <Text style={[styles.tabLabel, styles.tabLabelActive]}>{label}</Text> : null}
+                <Text style={[styles.tabLabel, isActive ? styles.tabLabelActive : styles.tabLabelInactive]}>{label}</Text>
               </Pressable>
             );
           })}
@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
   },
   tabBarWrap: {
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xs,
+    paddingTop: spacing.sm,
     paddingBottom: spacing.md,
     backgroundColor: colors.background,
   },
@@ -70,12 +70,16 @@ const styles = StyleSheet.create({
     minHeight: 72,
     borderColor: colors.border,
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 18,
-    backgroundColor: colors.surfaceRaised,
+    borderRadius: 8,
+    backgroundColor: colors.surface,
     flexDirection: 'row',
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.sm,
     gap: spacing.xs,
+    shadowColor: '#000000',
+    shadowOpacity: 0.28,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
   },
   tabItem: {
     flex: 1,
@@ -86,11 +90,13 @@ const styles = StyleSheet.create({
     borderRadius: 14,
   },
   tabItemActive: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.warningSoft,
+    borderColor: colors.warningMuted,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   tabPressed: {
-    transform: [{ scale: 0.96 }],
-    opacity: 0.82,
+    transform: [{ scale: 0.985 }],
+    opacity: 0.9,
   },
   tabLabel: {
     color: colors.text,
@@ -99,6 +105,9 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   tabLabelActive: {
-    color: colors.text,
+    color: colors.warning,
+  },
+  tabLabelInactive: {
+    color: colors.textFaint,
   },
 });

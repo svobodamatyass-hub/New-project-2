@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
 import { ArrowLeft, Bomb, CircleDot, CircleDotDashed, CirclePlay, Club, Gem, TrendingUp } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -6,6 +6,7 @@ import { Badge } from '../components/Badge';
 import { BrandHeader } from '../components/BrandHeader';
 import { Panel } from '../components/Panel';
 import { Screen } from '../components/Screen';
+import { CasinoGameSectionSkeleton } from '../components/ScreenSkeletons';
 import { SectionHeader } from '../components/SectionHeader';
 import { StatTile } from '../components/StatTile';
 import { casinoGames } from '../domain/casino';
@@ -13,13 +14,14 @@ import { formatMoney } from '../domain/finance';
 import { getActiveProfileLabel } from '../domain/settingsProfile';
 import { colors, spacing, typography, webFocusReset } from '../theme';
 import { useGame } from '../game/GameProvider';
-import { BlackjackScreen } from './BlackjackScreen';
-import { CrashScreen } from './CrashScreen';
-import { FortuneWheelScreen } from './FortuneWheelScreen';
-import { MinesScreen } from './MinesScreen';
-import { PlinkoScreen } from './PlinkoScreen';
-import { RouletteScreen } from './RouletteScreen';
-import { SlotsScreen } from './SlotsScreen';
+
+const SlotsScreen = lazy(() => import('./SlotsScreen').then((module) => ({ default: module.SlotsScreen })));
+const BlackjackScreen = lazy(() => import('./BlackjackScreen').then((module) => ({ default: module.BlackjackScreen })));
+const RouletteScreen = lazy(() => import('./RouletteScreen').then((module) => ({ default: module.RouletteScreen })));
+const FortuneWheelScreen = lazy(() => import('./FortuneWheelScreen').then((module) => ({ default: module.FortuneWheelScreen })));
+const CrashScreen = lazy(() => import('./CrashScreen').then((module) => ({ default: module.CrashScreen })));
+const PlinkoScreen = lazy(() => import('./PlinkoScreen').then((module) => ({ default: module.PlinkoScreen })));
+const MinesScreen = lazy(() => import('./MinesScreen').then((module) => ({ default: module.MinesScreen })));
 
 type CasinoView = 'hub' | 'slots' | 'blackjack' | 'roulette' | 'fortune' | 'crash' | 'plinko' | 'mines';
 
@@ -38,10 +40,40 @@ export function CasinoScreen() {
   const [casinoView, setCasinoView] = useState<CasinoView>('hub');
   const isHub = casinoView === 'hub';
   const profileLabel = getActiveProfileLabel(state.settings);
+  const activeGameTitle = useMemo(
+    () => casinoGames.find((game) => game.id === casinoView)?.title ?? 'Casino',
+    [casinoView],
+  );
+
+  const activeGame = useMemo(() => {
+    switch (casinoView) {
+      case 'slots':
+        return <SlotsScreen />;
+      case 'blackjack':
+        return <BlackjackScreen />;
+      case 'roulette':
+        return <RouletteScreen />;
+      case 'fortune':
+        return <FortuneWheelScreen />;
+      case 'crash':
+        return <CrashScreen />;
+      case 'plinko':
+        return <PlinkoScreen />;
+      case 'mines':
+        return <MinesScreen />;
+      case 'hub':
+      default:
+        return null;
+    }
+  }, [casinoView]);
 
   return (
     <Screen>
-      <BrandHeader screen="Casino" status={profileLabel} statusTone={profileLabel === 'Chaos' ? 'negative' : profileLabel === 'Chill' ? 'positive' : 'warning'} />
+      <BrandHeader
+        screen={isHub ? 'Casino' : activeGameTitle}
+        status={profileLabel}
+        statusTone={profileLabel === 'Chaos' ? 'negative' : profileLabel === 'Chill' ? 'positive' : 'warning'}
+      />
 
       {!isHub ? (
         <Pressable
@@ -59,6 +91,13 @@ export function CasinoScreen() {
           <SectionHeader title="Games" />
 
           <Panel>
+            <View style={styles.hubHeader}>
+              <View>
+                <Text style={styles.hubTitle}>Choose a table</Text>
+                <Text style={styles.hubCopy}>Token games, live wagers, and high-variance rounds in one bankroll.</Text>
+              </View>
+              <Badge label={`${casinoGames.length} games`} tone="warning" />
+            </View>
             <View style={styles.statsRow}>
               <StatTile label="Cash" value={formatMoney(state.player.cash)} />
               <StatTile label="Tokens" tone={state.casino.tokens > 0 ? 'warning' : 'default'} value={`${state.casino.tokens}`} />
@@ -94,13 +133,16 @@ export function CasinoScreen() {
         </>
       ) : null}
 
-      {casinoView === 'slots' ? <SlotsScreen /> : null}
-      {casinoView === 'blackjack' ? <BlackjackScreen /> : null}
-      {casinoView === 'roulette' ? <RouletteScreen /> : null}
-      {casinoView === 'fortune' ? <FortuneWheelScreen /> : null}
-      {casinoView === 'crash' ? <CrashScreen /> : null}
-      {casinoView === 'plinko' ? <PlinkoScreen /> : null}
-      {casinoView === 'mines' ? <MinesScreen /> : null}
+      {!isHub ? (
+        <Panel>
+          <View style={styles.gameMetaRow}>
+            <StatTile label="Cash" value={formatMoney(state.player.cash)} />
+            <StatTile label="Tokens" tone={state.casino.tokens > 0 ? 'warning' : 'default'} value={`${state.casino.tokens}`} />
+          </View>
+        </Panel>
+      ) : null}
+
+      {!isHub ? <Suspense fallback={<CasinoGameSectionSkeleton />}>{activeGame}</Suspense> : null}
     </Screen>
   );
 }
@@ -131,8 +173,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
   },
+  hubHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: spacing.md,
+  },
+  hubTitle: {
+    color: colors.text,
+    fontFamily: typography.family,
+    fontSize: 22,
+    fontWeight: '900',
+  },
+  hubCopy: {
+    marginTop: 4,
+    color: colors.textMuted,
+    fontFamily: typography.family,
+    fontSize: 12,
+    fontWeight: '700',
+    lineHeight: 18,
+    maxWidth: 220,
+  },
   card: {
-    minHeight: 92,
+    minHeight: 104,
     borderColor: colors.border,
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 8,
@@ -141,14 +204,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
+    shadowColor: '#000000',
+    shadowOpacity: 0.22,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 10 },
   },
   pressed: {
     opacity: 0.84,
     transform: [{ scale: 0.985 }],
   },
   iconFrame: {
-    width: 46,
-    height: 46,
+    width: 50,
+    height: 50,
     borderRadius: 8,
     borderWidth: StyleSheet.hairlineWidth,
     backgroundColor: colors.surfaceRaised,
@@ -159,11 +226,15 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
   },
+  gameMetaRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
   title: {
     color: colors.text,
     fontFamily: typography.family,
-    fontSize: 18,
-    fontWeight: '800',
+    fontSize: 19,
+    fontWeight: '900',
   },
   description: {
     color: colors.textFaint,

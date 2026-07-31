@@ -424,7 +424,7 @@ export function BlackjackScreen() {
                 />
               ))
             ) : (
-              <Text style={styles.empty}>-</Text>
+              <Text style={styles.empty}>Dealer hand appears after Deal.</Text>
             )}
           </View>
         </View>
@@ -445,7 +445,7 @@ export function BlackjackScreen() {
                 />
               ))
             ) : (
-              <Text style={styles.empty}>-</Text>
+              <Text style={styles.empty}>Your cards appear after Deal.</Text>
             )}
           </View>
         </View>

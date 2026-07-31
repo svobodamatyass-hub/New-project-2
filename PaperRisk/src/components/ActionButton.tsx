@@ -23,7 +23,7 @@ export function ActionButton({
   tone = 'neutral',
   onPress,
 }: ActionButtonProps) {
-  const iconColor = tone === 'primary' ? colors.background : colors.text;
+  const iconColor = tone === 'primary' || tone === 'casino' ? colors.background : colors.text;
 
   return (
     <Pressable
@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   largeButton: {
-    minHeight: 72,
+    minHeight: 76,
   },
   inner: {
     flexDirection: 'row',
@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   neutral: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceRaised,
     borderColor: colors.border,
   },
   primary: {
@@ -79,16 +79,16 @@ const styles = StyleSheet.create({
     borderColor: colors.text,
   },
   danger: {
-    backgroundColor: colors.negativeSoft,
+    backgroundColor: '#4A1E1C',
     borderColor: colors.negativeMuted,
   },
   casino: {
-    backgroundColor: colors.warningSoft,
-    borderColor: colors.warningMuted,
+    backgroundColor: colors.warning,
+    borderColor: '#F4D08A',
   },
   pressed: {
-    opacity: 0.84,
-    transform: [{ scale: 0.97 }],
+    opacity: 0.92,
+    transform: [{ scale: 0.985 }],
   },
   disabled: {
     opacity: 0.48,
@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   largeLabel: {
-    fontSize: 18,
+    fontSize: 17,
   },
   primaryLabel: {
     color: colors.background,
